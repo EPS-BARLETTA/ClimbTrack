@@ -18,14 +18,20 @@
       </div>
     </div>
     <div class="card">
-      <h2>Voie & Cotation</h2>
+      <h2>Saisie (cotation / relais / style)</h2>
       <p class="lead" id="idline"></p>
 
       <div class="row row-2">
         <div class="card">
-          <label>Voie (nom/numéro)<input id="d_voie" placeholder="Ex. n°7 ou 'Arête Ouest'"></label>
           <label>Cotation<input id="d_cotation" placeholder="Ex. 5c, 6a+"></label>
-          <label>Relais atteint (X)<input id="d_relais" type="number" min="0" max="30" placeholder="Ex. 5"></label>
+          <label>Relais atteint (X)<input id="d_relais" type="number" min="0" max="40" placeholder="Ex. 5"></label>
+          <label>Style
+            <select id="d_style">
+              <option value="moulinette">Moulinette</option>
+              <option value="en_tete">En tête</option>
+              <option value="mouli_tete">Mouli‑tête</option>
+            </select>
+          </label>
           <label>Résultat
             <select id="d_resultat">
               <option value="reussie">Réussie</option>
@@ -46,17 +52,20 @@
             <label>Détails (ex. dégaine 5, remarque…)<input id="d_details" placeholder="Ex. loupé dégaine 5"></label>
           </div>
           <div class="actions">
-            <button class="btn blue" id="btn-diff">🧾 Générer le QR</button>
+            <button class="btn blue" id="btn-add">➕ Ajouter à la séance</button>
+            <button class="btn red" id="btn-clear">♻️ Vider la séance</button>
           </div>
         </div>
 
         <div class="card">
-          <h3>Conseils</h3>
-          <ul>
-            <li>Note la <strong>cotation</strong> et le <strong>relais (X)</strong> atteints.</li>
-            <li>Si non terminée, choisis un <strong>motif</strong> et ajoute un détail (ex. “dégaine 5”).</li>
-            <li>Une saisie = un QR. Recommence pour une autre voie.</li>
-          </ul>
+          <h3>Liste de séance</h3>
+          <table class="table" id="d_table">
+            <thead><tr><th>#</th><th>Cotation</th><th>Relais</th><th>Style</th><th>Résultat</th><th>Motif</th><th>Action</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="actions">
+            <button class="btn green" id="btn-qr">📷 Générer le QR</button>
+          </div>
         </div>
       </div>
 
@@ -81,31 +90,60 @@
 
   const dres = document.getElementById('d_resultat');
   const motifs = document.getElementById('motifs');
-  dres.addEventListener('change', ()=>{
-    motifs.style.display = (dres.value === 'non_terminee') ? 'block' : 'none';
-  });
+  dres.addEventListener('change', ()=>{ motifs.style.display = (dres.value === 'non_terminee') ? 'block' : 'none'; });
 
-  document.getElementById('btn-diff').addEventListener('click', ()=>{
-    const Voie = document.getElementById('d_voie').value.trim();
+  const list = [];
+  const tbody = document.querySelector('#d_table tbody');
+
+  function render(){
+    tbody.innerHTML = "";
+    list.forEach((it, idx)=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${idx+1}</td>
+        <td>${it.Cotation||''}</td>
+        <td>${it.Relais??''}</td>
+        <td>${it.Style}</td>
+        <td>${it.Resultat}</td>
+        <td>${it.Motif||''} ${it.Details?(' - '+it.Details):''}</td>
+        <td><button class="btn red" data-i="${idx}">Supprimer</button></td>`;
+      tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll('button[data-i]').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        const i = parseInt(e.currentTarget.getAttribute('data-i'),10);
+        list.splice(i,1); render();
+      });
+    });
+  }
+
+  document.getElementById('btn-add').onclick = ()=>{
     const Cotation = document.getElementById('d_cotation').value.trim();
     const Relais = parseInt(document.getElementById('d_relais').value||'0',10);
+    const Style = document.getElementById('d_style').value;
     const Resultat = document.getElementById('d_resultat').value;
+    const item = {Cotation, Relais, Style, Resultat};
+    if(Resultat==='non_terminee'){
+      item.Motif = document.getElementById('d_motif').value;
+      item.Details = document.getElementById('d_details').value.trim() || null;
+    }
+    if(!Cotation){ alert('Saisir une cotation'); return; }
+    list.push(item); render();
+  };
+  document.getElementById('btn-clear').onclick = ()=>{ list.length = 0; render(); };
+
+  document.getElementById('btn-qr').onclick = ()=>{
+    if(list.length===0){ alert('Ajoute au moins une réalisation'); return; }
     const payload = {
       App:'ClimbTrack', Type:'difficulte',
       Nom:id.Nom, Prenom:id.Prenom, Classe:id.Classe,
-      Voie, Cotation, Relais,
-      Resultat,
+      Seance: list,
       DateISO: nowISO()
     };
-    if(Resultat==='non_terminee'){
-      payload.Motif = document.getElementById('d_motif').value;
-      payload.Details = document.getElementById('d_details').value.trim() || null;
-    }
     const {json} = makeQR(document.getElementById('qrd'), payload);
     document.getElementById('jsond').textContent = json;
     document.getElementById('qr-section').style.display = 'block';
     window.scrollTo({top:document.body.scrollHeight, behavior:'smooth'});
-  });
+  };
 </script>
 </body>
 </html>

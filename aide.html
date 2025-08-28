@@ -10,32 +10,67 @@
 <div class="main-wrap">
   <div class="container">
     <div class="headerbar">
-      <div class="logo">🧗 <span class="highlight">ClimbTrack</span></div>
+      <div class="logo">❓ <span class="highlight">Aide ClimbTrack</span></div>
       <div class="right">
         <a class="btn green" href="menu.html">🏠 Menu</a>
         <a class="btn amber" href="securite.html">🦺 Sécurité</a>
       </div>
     </div>
-    <div class="card">
-      <h1>❓ Aide</h1>
-      <p class="lead">ClimbTrack génère un <strong>QR code JSON</strong> compatible ScanProf pour centraliser les résultats.</p>
-      <h3>1) S’identifier</h3>
-      <p>Depuis l’accueil, renseigne <strong>Nom, Prénom, Classe</strong>. Tu arrives ensuite sur le <em>Menu</em>.</p>
-      <h3>2) Choisir une pratique</h3>
-      <ul>
-        <li><strong>Bloc :</strong> choisis une <em>couleur</em> (jaune, vert, bleu, rouge) puis un <em>numéro</em> → “Ajouter à ma liste” pour chaque réussite. “Générer QR” à la fin.</li>
-        <li><strong>Difficulté :</strong> indique la <em>voie</em>, la <em>cotation</em>, le <em>relais (X)</em>, puis <em>Résultat</em> et <em>Motif</em> si non terminé → “Générer QR”.</li>
-        <li><strong>Vitesse :</strong> saisis un temps (mm:ss.cc). Option : <em>Chrono intégré</em> si ton mur n’a pas de chrono.</li>
-      </ul>
-      <h3>3) Scanner avec ScanProf</h3>
-      <p>Le QR s’affiche à l’écran. L’enseignant scanne avec <strong>ScanProf</strong> pour récupérer toutes les infos de la séance.</p>
-      <p class="small">Clés JSON : <code>{"App":"ClimbTrack","Type":"bloc|difficulte|vitesse","Nom","Prenom","Classe", ...}</code></p>
+
+    <div class="row row-3">
+      <div class="card">
+        <h2>1) S’identifier</h2>
+        <p class="lead">Nom, Prénom, Classe → accès au menu.</p>
+        <div class="actions"><a class="btn blue" href="identite.html">📝 Identification</a></div>
+      </div>
+      <div class="card">
+        <h2>2) Choisir</h2>
+        <p class="lead">Sélectionne Bloc, Difficulté ou Vitesse.</p>
+        <div class="actions"><a class="btn blue" href="menu.html">🧭 Ouvrir le menu</a></div>
+      </div>
+      <div class="card">
+        <h2>3) Générer le QR</h2>
+        <p class="lead">Un QR <strong>JSON</strong> s’affiche → scanner avec <strong>ScanProf</strong>.</p>
+      </div>
+    </div>
+
+    <div class="row row-3" style="margin-top:12px;">
+      <div class="card">
+        <h3>🟨🟩🟦🟥 Bloc</h3>
+        <ul>
+          <li>Choisis une <strong>couleur</strong>, saisis le <strong>numéro</strong>.</li>
+          <li>Ajoute chaque réussite à ta <strong>liste</strong>.</li>
+          <li>“Générer le QR” en fin de séance.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>🧗 Difficulté</h3>
+        <ul>
+          <li>Saisis la <strong>cotation</strong>, le <strong>relais (X)</strong>, le <strong>style</strong> : moulinette / en tête / mouli‑tête.</li>
+          <li>Résultat : <strong>réussie</strong> ou <strong>non terminée</strong> + <em>motif</em> si besoin.</li>
+          <li>Ajoute à la <strong>liste de séance</strong> puis génère le QR.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>⚡ Vitesse</h3>
+        <ul>
+          <li>Ajoute tes <strong>essais</strong> (saisie manuelle ou <em>chrono intégré</em> si besoin).</li>
+          <li>Le <strong>meilleur temps</strong> est automatiquement retenu dans le QR.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:12px;">
+      <h3>Format QR (exemple)</h3>
+      <pre class="pre">
+{"App":"ClimbTrack","Type":"difficulte","Nom":"Dupont","Prenom":"Alice","Classe":"2ndeB",
+"Seance":[{"Cotation":"6a+","Relais":5,"Style":"en_tete","Resultat":"reussie"}],"DateISO":"..."}
+      </pre>
+      <p class="small">Les colonnes s’adaptent automatiquement dans <em>ScanProf</em>.</p>
     </div>
   </div>
   <footer><div class="container"><div class="footer-inner"></div></div></footer>
 </div>
-<script type="module">
-  import {renderFooter} from './app.js'; renderFooter();
-</script>
+<script type="module"> import {renderFooter} from './app.js'; renderFooter(); </script>
 </body>
 </html>

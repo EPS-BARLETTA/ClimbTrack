@@ -22,33 +22,22 @@
       <p class="lead" id="idline"></p>
       <div class="menu-grid" style="margin-top:12px;">
         <div class="menu-card">
-          <div>
-            <div class="title">🟨🟩🟦🟥 Bloc</div>
-            <p>Enregistre les blocs réussis (par couleur + numéro). Idéal si les blocs ne sont pas nommés.</p>
-          </div>
+          <div><div class="title">🟨🟩🟦🟥 Bloc</div><p>Enregistre les blocs réussis (couleur + numéro). QR en fin de séance.</p></div>
           <a class="btn blue" href="bloc.html">Aller au Bloc</a>
         </div>
         <div class="menu-card">
-          <div>
-            <div class="title">🧗 Difficulté</div>
-            <p>Voie, cotation, relais (X), résultat (réussie/essayée), motif si non terminé.</p>
-          </div>
+          <div><div class="title">🧗 Difficulté</div><p>Cotation, relais (X), style (moulinette / en tête / mouli‑tête), résultat + motif.</p></div>
           <a class="btn blue" href="difficulte.html">Aller à la Difficulté</a>
         </div>
         <div class="menu-card">
-          <div>
-            <div class="title">⚡ Vitesse</div>
-            <p>Temps saisi manuellement, ou utilise le chrono intégré si ton mur n’a pas de chrono.</p>
-          </div>
+          <div><div class="title">⚡ Vitesse</div><p>Ajoute tes essais (saisie manuelle ou chrono intégré). Le QR conserve le <strong>meilleur</strong> temps.</p></div>
           <a class="btn blue" href="vitesse.html">Aller à la Vitesse</a>
         </div>
       </div>
     </div>
   </div>
-  <footer><div class="container"><div class="footer-inner"></div></div></footer>
+  <footer><div class="container"><div class="footer-inner"></div></footer>
 </div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
 <script type="module">
   import {getIdentite, ensureIdentite, renderFooter, headerInit} from './app.js';
   renderFooter(); headerInit(); ensureIdentite();

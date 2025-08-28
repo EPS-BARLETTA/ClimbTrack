@@ -18,26 +18,21 @@
       </div>
     </div>
     <div class="card">
-      <h2>Temps de voie</h2>
+      <h2>Essais & meilleur temps</h2>
       <p class="lead" id="idline"></p>
 
       <div class="row row-2">
         <div class="card">
           <h3>⏱️ Saisie manuelle</h3>
           <div class="row row-3">
-            <label>Minutes
-              <input id="vm" type="number" min="0" max="59" placeholder="00">
-            </label>
-            <label>Secondes
-              <input id="vs" type="number" min="0" max="59" placeholder="00">
-            </label>
-            <label>Centièmes
-              <input id="vc" type="number" min="0" max="99" placeholder="00">
-            </label>
+            <label>Minutes<input id="vm" type="number" min="0" max="59" placeholder="00"></label>
+            <label>Secondes<input id="vs" type="number" min="0" max="59" placeholder="00"></label>
+            <label>Centièmes<input id="vc" type="number" min="0" max="99" placeholder="00"></label>
           </div>
           <label>Voie (optionnel)<input id="vvoie" placeholder="Ex. Vitesse officielle, ligne 2"></label>
           <div class="actions">
-            <button class="btn blue" id="btn-v-manual">🧾 Préparer le QR</button>
+            <button class="btn blue" id="btn-add">➕ Ajouter essai</button>
+            <button class="btn red" id="btn-clear">♻️ Vider essais</button>
           </div>
         </div>
 
@@ -49,7 +44,20 @@
             <button class="btn green" id="vstart">Lancer</button>
             <button class="btn amber" id="vstop">Stop</button>
             <button class="btn red" id="vreset">Réinitialiser</button>
+            <button class="btn blue" id="btn-add-from-chrono">➕ Ajouter depuis chrono</button>
           </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Mes essais</h3>
+        <table class="table" id="v_table">
+          <thead><tr><th>#</th><th>Temps</th><th>Voie</th><th>Action</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <p class="lead">Meilleur temps : <strong id="best"></strong></p>
+        <div class="actions">
+          <button class="btn green" id="btn-qr">📷 Générer le QR (meilleur)</button>
         </div>
       </div>
 
@@ -67,32 +75,43 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script type="module">
-  import {getIdentite, ensureIdentite, renderFooter, formatTime, makeQR, nowISO} from './app.js';
+  import {getIdentite, ensureIdentite, renderFooter, formatTime, parseTimeToCentis, makeQR, nowISO} from './app.js';
   renderFooter(); ensureIdentite();
   const id = getIdentite();
   document.getElementById('idline').innerHTML = `Élève : <strong>${id.Prenom} ${id.Nom}</strong> — <span class='badge'>Classe : ${id.Classe}</span>`;
 
-  const vm = document.getElementById('vm');
-  const vs = document.getElementById('vs');
-  const vc = document.getElementById('vc');
+  const runs = [];
+  const tbody = document.querySelector('#v_table tbody');
+  const bestEl = document.getElementById('best');
   const vvoie = document.getElementById('vvoie');
-  const qrs = document.getElementById('qr-section');
-  const qrel = document.getElementById('qrv');
-  const jsonel = document.getElementById('jsonv');
 
-  document.getElementById('btn-v-manual').addEventListener('click', ()=>{
-    const Temps = formatTime(vm.value, vs.value, vc.value);
-    const payload = {
-      App:'ClimbTrack', Type:'vitesse',
-      Nom:id.Nom, Prenom:id.Prenom, Classe:id.Classe,
-      Temps, Voie: vvoie.value || null,
-      DateISO: nowISO()
-    };
-    const {json} = makeQR(qrel, payload);
-    jsonel.textContent = json;
-    qrs.style.display = 'block';
-    window.scrollTo({top:document.body.scrollHeight, behavior:'smooth'});
-  });
+  function render(){
+    tbody.innerHTML = "";
+    let best = null;
+    runs.forEach((it, idx)=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${idx+1}</td>
+        <td>${it.Temps}</td>
+        <td>${it.Voie||''}</td>
+        <td><button class="btn red" data-i="${idx}">Supprimer</button></td>`;
+      tbody.appendChild(tr);
+      const val = parseTimeToCentis(it.Temps);
+      if(best===null || val < best.val){ best = {val, txt: it.Temps}; }
+    });
+    tbody.querySelectorAll('button[data-i]').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{ const i = parseInt(e.currentTarget.getAttribute('data-i'),10); runs.splice(i,1); render(); });
+    });
+    bestEl.textContent = best ? best.txt : '—';
+  }
+
+  function addRunFromInputs(){
+    const Temps = formatTime(document.getElementById('vm').value, document.getElementById('vs').value, document.getElementById('vc').value);
+    runs.push({Temps, Voie: vvoie.value||null});
+    render();
+  }
+
+  document.getElementById('btn-add').onclick = addRunFromInputs;
+  document.getElementById('btn-clear').onclick = ()=>{ runs.length=0; render(); };
 
   // Simple stopwatch
   let t0 = 0, raf = null, running=false;
@@ -105,16 +124,34 @@
     if(running) raf = requestAnimationFrame(tick);
   }
   document.getElementById('vstart').onclick = ()=>{ if(!running){ running=true; t0 = Date.now(); raf = requestAnimationFrame(tick);} };
-  document.getElementById('vstop').onclick = ()=>{
-    if(!running) return;
-    running=false; if(raf) cancelAnimationFrame(raf);
+  document.getElementById('vstop').onclick = ()=>{ if(!running) return; running=false; if(raf) cancelAnimationFrame(raf); };
+  document.getElementById('vreset').onclick = ()=>{ running=false; if(raf) cancelAnimationFrame(raf); document.getElementById('vtimer').textContent = '00:00.00'; };
+  document.getElementById('btn-add-from-chrono').onclick = ()=>{
     const txt = document.getElementById('vtimer').textContent;
-    vm.value = txt.slice(0,2); vs.value = txt.slice(3,5); vc.value = txt.slice(6,8);
+    runs.push({Temps: txt, Voie: vvoie.value||null});
+    render();
   };
-  document.getElementById('vreset').onclick = ()=>{
-    running=false; if(raf) cancelAnimationFrame(raf);
-    document.getElementById('vtimer').textContent = '00:00.00';
-    vm.value = vs.value = vc.value = '';
+
+  document.getElementById('btn-qr').onclick = ()=>{
+    if(runs.length===0){ alert('Ajoute au moins un essai'); return; }
+    // compute best
+    let best = runs[0];
+    let bestVal = parseTimeToCentis(best.Temps);
+    for(let i=1;i<runs.length;i++){
+      const v = parseTimeToCentis(runs[i].Temps);
+      if(v < bestVal){ best = runs[i]; bestVal = v; }
+    }
+    const payload = {
+      App:'ClimbTrack', Type:'vitesse',
+      Nom:id.Nom, Prenom:id.Prenom, Classe:id.Classe,
+      BestTemps: best.Temps, Voie: best.Voie||null,
+      Essais: runs,
+      DateISO: nowISO()
+    };
+    const {json} = makeQR(document.getElementById('qrv'), payload);
+    document.getElementById('jsonv').textContent = json;
+    document.getElementById('qr-section').style.display = 'block';
+    window.scrollTo({top:document.body.scrollHeight, behavior:'smooth'});
   };
 </script>
 </body>
