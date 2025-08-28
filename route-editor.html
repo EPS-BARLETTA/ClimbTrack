@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ClimbTrack — Créateur de voie (photo)</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="main-wrap">
+  <div class="container">
+    <div class="headerbar">
+      <div class="logo">📷🛠️ <span class="highlight">Créateur de voie</span></div>
+      <div class="right">
+        <a class="btn green" href="menu.html">🏠 Menu</a>
+        <a class="btn violet" href="aide.html">❓ Aide</a>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Photo du mur & édition</h2>
+      <p class="lead" id="idline"></p>
+
+      <div class="row row-2">
+        <div class="card">
+          <label>Importer une photo du mur (ou appareil photo)
+            <input id="file" type="file" accept="image/*" capture="environment">
+          </label>
+          <div class="actions">
+            <label>Mode
+              <select id="mode">
+                <option value="ajouter">Ajouter prise</option>
+                <option value="retirer">Retirer (masquer) prise</option>
+                <option value="deplacer">Déplacer</option>
+                <option value="supprimer">Supprimer marqueur</option>
+              </select>
+            </label>
+            <label>Taille prise (px)<input id="radius" type="number" min="6" max="60" value="18"></label>
+            <label>Couleur
+              <select id="color">
+                <option value="#22c55e">Vert</option>
+                <option value="#3b82f6">Bleu</option>
+                <option value="#ef4444">Rouge</option>
+                <option value="#fde047">Jaune</option>
+                <option value="#e5e7eb">Blanc</option>
+              </select>
+            </label>
+            <button class="btn red" id="undo">↩️ Annuler</button>
+            <button class="btn red" id="clear">🗑️ Tout effacer</button>
+          </div>
+          <p class="small">Astuce iPad : pincer pour zoomer (Safari), toucher pour ajouter/éditer selon le mode.</p>
+        </div>
+        <div class="card">
+          <canvas id="canvas" style="width:100%; max-height:70vh; background:#0b1224; border-radius:12px;"></canvas>
+        </div>
+      </div>
+
+      <div class="row row-2">
+        <div class="card">
+          <h3>Métadonnées de la voie</h3>
+          <label>Titre (optionnel)<input id="title" placeholder="Ex. Créa 6a bleu"></label>
+          <label>Cotation (optionnel)<input id="grade" placeholder="Ex. 6a"></label>
+          <label>Style
+            <select id="style">
+              <option value="moulinette">Moulinette</option>
+              <option value="en_tete">En tête</option>
+              <option value="mouli_tete">Mouli-tête</option>
+            </select>
+          </label>
+          <label>Relais (X) ciblé<input id="targetX" type="number" min="0" max="40" placeholder="Ex. 8"></label>
+        </div>
+        <div class="card">
+          <h3>Exports</h3>
+          <div class="actions">
+            <button class="btn blue" id="export-png">🖼️ Télécharger l’image</button>
+            <button class="btn blue" id="export-json">💾 Télécharger les données</button>
+          </div>
+          <p class="small">Le QR n’est pas nécessaire ici : l’élève conserve simplement une <strong>trace</strong> (PNG + JSON).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer><div class="container"><div class="footer-inner"></div></div></footer>
+</div>
+
+<script type="module">
+  import {getIdentite, ensureIdentite, renderFooter} from './app.js';
+  renderFooter(); ensureIdentite();
+  const id = getIdentite();
+  document.getElementById('idline').innerHTML = `Élève : <strong>${id.Prenom} ${id.Nom}</strong> — <span class='badge'>Classe : ${id.Classe}</span>`;
+
+  const file = document.getElementById('file');
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+
+  let baseImg = null;
+  let scale = 1, offsetX = 0, offsetY = 0;
+  let points = []; // {x,y,r,color,state:'added'|'removed'}
+  let history = [];
+
+  function fitCanvas(w,h){
+    const dpr = window.devicePixelRatio||1;
+    canvas.width = Math.round(w*dpr);
+    canvas.height = Math.round(h*dpr);
+    canvas.style.height = h+'px';
+    canvas.style.width = '100%';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+
+  function snapshot(){ history.push(JSON.stringify(points)); if(history.length>100) history.shift(); }
+  function undo(){ if(history.length>0){ points = JSON.parse(history.pop()); draw(); } }
+
+  function draw(){
+    if(!baseImg) { ctx.clearRect(0,0,canvas.width,canvas.height); return; }
+    const w = baseImg.width*scale;
+    const h = baseImg.height*scale;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.save();
+    ctx.translate(offsetX, offsetY);
+    ctx.drawImage(baseImg, 0, 0, w, h);
+    // overlay holds
+    points.forEach(p=>{
+      ctx.beginPath();
+      ctx.arc(p.x*scale, p.y*scale, p.r, 0, Math.PI*2);
+      ctx.fillStyle = p.state==='removed' ? 'rgba(239,68,68,0.35)' : p.color;
+      ctx.globalAlpha = p.state==='removed' ? 0.5 : 0.85;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#111';
+      ctx.stroke();
+    });
+    ctx.restore();
+  }
+
+  file.addEventListener('change', (e)=>{
+    const f = e.target.files[0]; if(!f) return;
+    const img = new Image();
+    img.onload = ()=>{
+      baseImg = img;
+      const maxW = canvas.parentElement.clientWidth - 2;
+      const ratio = img.width / img.height;
+      const h = Math.min(720, Math.max(360, Math.round(maxW/ratio)));
+      scale = (maxW / img.width);
+      offsetX = 0; offsetY = 0;
+      fitCanvas(maxW, h);
+      draw();
+    };
+    img.src = URL.createObjectURL(f);
+  });
+
+  // interactions
+  let dragging = null;
+  function canvasPos(evt){
+    const rect = canvas.getBoundingClientRect();
+    const x = (evt.touches? evt.touches[0].clientX : evt.clientX) - rect.left;
+    const y = (evt.touches? evt.touches[0].clientY : evt.clientY) - rect.top;
+    return { x: (x - offsetX)/scale, y: (y - offsetY)/scale };
+  }
+
+  function findAt(x,y){
+    let best=-1, bestd=1e9;
+    points.forEach((p,i)=>{
+      const dx = x - p.x, dy = y - p.y;
+      const d = Math.hypot(dx,dy);
+      if(d <= p.r*1.2 && d<bestd){ best=i; bestd=d; }
+    });
+    return best;
+  }
+
+  canvas.addEventListener('mousedown', start);
+  canvas.addEventListener('touchstart', start, {passive:false});
+  function start(e){
+    e.preventDefault();
+    if(!baseImg) return;
+    const mode = document.getElementById('mode').value;
+    const {x,y} = canvasPos(e);
+    const idx = findAt(x,y);
+    if(mode==='deplacer' && idx>=0){ dragging = idx; return; }
+    if(mode==='supprimer' && idx>=0){ snapshot(); points.splice(idx,1); draw(); return; }
+    if(mode==='ajouter'){
+      snapshot();
+      const r = parseInt(document.getElementById('radius').value||'18',10);
+      const color = document.getElementById('color').value;
+      points.push({x,y,r,color,state:'added'});
+      draw(); return;
+    }
+    if(mode==='retirer'){
+      snapshot();
+      const r = parseInt(document.getElementById('radius').value||'18',10);
+      points.push({x,y,r,color:'#ef4444',state:'removed'});
+      draw(); return;
+    }
+  }
+  canvas.addEventListener('mousemove', move);
+  canvas.addEventListener('touchmove', move, {passive:false});
+  function move(e){
+    if(dragging===null) return;
+    e.preventDefault();
+    const pos = canvasPos(e);
+    points[dragging].x = pos.x;
+    points[dragging].y = pos.y;
+    draw();
+  }
+  window.addEventListener('mouseup', ()=>{ dragging=null; });
+  window.addEventListener('touchend', ()=>{ dragging=null; });
+
+  document.getElementById('undo').onclick = undo;
+  document.getElementById('clear').onclick = ()=>{ if(confirm('Effacer tous les marqueurs ?')){ snapshot(); points=[]; draw(); } };
+
+  // exports
+  document.getElementById('export-png').onclick = ()=>{
+    if(!baseImg){ alert('Ajoute une photo d’abord'); return; }
+    const a = document.createElement('a');
+    a.download = (document.getElementById('title').value||'climbtrack_voie') + '.png';
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+  };
+  document.getElementById('export-json').onclick = ()=>{
+    if(!baseImg){ alert('Ajoute une photo d’abord'); return; }
+    const data = {
+      App:'ClimbTrack', Type:'route',
+      Meta:{
+        Title: document.getElementById('title').value||null,
+        Cotation: document.getElementById('grade').value||null,
+        Style: document.getElementById('style').value,
+        TargetRelais: parseInt(document.getElementById('targetX').value||'0',10)||null,
+        ImgSize: {w: baseImg.width, h: baseImg.height}
+      },
+      Points: points
+    };
+    const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.download = (document.getElementById('title').value||'climbtrack_voie') + '.json';
+    a.href = URL.createObjectURL(blob);
+    a.click();
+  };
+</script>
+</body>
+</html>

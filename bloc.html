@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ClimbTrack — Bloc</title>
 <link rel="stylesheet" href="style.css">
 </head>
@@ -48,8 +48,8 @@
         </div>
         <div class="card">
           <h3>Astuce d’identification</h3>
-          <p>Si les blocs n’ont pas de nom, affiche simplement un <strong>numéro</strong> sous chaque couleur dans la salle (ex. “Bleu 1, Bleu 2…”).</p>
-          <p class="small">Exemple : <code>{"Couleur":"bleu","Numero":5}</code></p>
+          <p>Si les blocs n’ont pas de nom, affiche un <strong>numéro</strong> par couleur (Bleu 1, Bleu 2…).</p>
+          <p class="small">QR à plat : <code>Bloc1=bleu-5, Bloc2=vert-3…</code></p>
         </div>
       </div>
 
@@ -104,12 +104,14 @@
 
   document.getElementById('b_qr').onclick = ()=>{
     if(list.length===0){ alert('Ajoute au moins un bloc réussi'); return; }
-    const payload = {
-      App:'ClimbTrack', Type:'bloc',
-      Nom:id.Nom, Prenom:id.Prenom, Classe:id.Classe,
-      Reussites: list.map(x=>({Couleur:x.Couleur, Numero:x.Numero})),
-      DateISO: nowISO()
-    };
+    // Flat payload: identity first, then one result per column
+    const payload = {};
+    payload.Nom = id.Nom; payload.Prenom = id.Prenom; payload.Classe = id.Classe;
+    payload.App = 'ClimbTrack'; payload.Type = 'bloc';
+    for(let i=0;i<list.length;i++){
+      payload['Bloc'+(i+1)] = `${list[i].Couleur}-${list[i].Numero}`;
+    }
+    payload.DateISO = nowISO();
     const {json} = makeQR(document.getElementById('qrb'), payload);
     document.getElementById('jsonb').textContent = json;
     document.getElementById('qr-section').style.display = 'block';

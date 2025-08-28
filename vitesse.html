@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ClimbTrack — Vitesse</title>
 <link rel="stylesheet" href="style.css">
 </head>
@@ -39,7 +39,7 @@
         <div class="card">
           <h3>⏱️ Chrono intégré (option)</h3>
           <p class="small">À utiliser seulement si votre mur n’a pas de chrono.</p>
-          <div style="font-size:2rem; font-weight:800; margin:10px 0;" id="vtimer">00:00.00</div>
+          <div style="font-size:2.2rem; font-weight:900; margin:10px 0;" id="vtimer">00:00.00</div>
           <div class="actions">
             <button class="btn green" id="vstart">Lancer</button>
             <button class="btn amber" id="vstop">Stop</button>
@@ -57,7 +57,7 @@
         </table>
         <p class="lead">Meilleur temps : <strong id="best"></strong></p>
         <div class="actions">
-          <button class="btn green" id="btn-qr">📷 Générer le QR (meilleur)</button>
+          <button class="btn green" id="btn-qr">📷 Générer le QR</button>
         </div>
       </div>
 
@@ -96,7 +96,7 @@
         <td><button class="btn red" data-i="${idx}">Supprimer</button></td>`;
       tbody.appendChild(tr);
       const val = parseTimeToCentis(it.Temps);
-      if(best===null || val < best.val){ best = {val, txt: it.Temps}; }
+      if(best===null || val < best.val){ best = {val, txt: it.Temps, voie: it.Voie||null}; }
     });
     tbody.querySelectorAll('button[data-i]').forEach(btn=>{
       btn.addEventListener('click', (e)=>{ const i = parseInt(e.currentTarget.getAttribute('data-i'),10); runs.splice(i,1); render(); });
@@ -141,13 +141,16 @@
       const v = parseTimeToCentis(runs[i].Temps);
       if(v < bestVal){ best = runs[i]; bestVal = v; }
     }
-    const payload = {
-      App:'ClimbTrack', Type:'vitesse',
-      Nom:id.Nom, Prenom:id.Prenom, Classe:id.Classe,
-      BestTemps: best.Temps, Voie: best.Voie||null,
-      Essais: runs,
-      DateISO: nowISO()
-    };
+    const payload = {};
+    // identity first
+    payload.Nom = id.Nom; payload.Prenom = id.Prenom; payload.Classe = id.Classe;
+    payload.App = 'ClimbTrack'; payload.Type = 'vitesse';
+    for(let i=0;i<runs.length;i++){
+      payload['Essai'+(i+1)] = runs[i].Temps;
+    }
+    payload.BestTemps = best.Temps;
+    if(best.Voie) payload.Voie = best.Voie;
+    payload.DateISO = nowISO();
     const {json} = makeQR(document.getElementById('qrv'), payload);
     document.getElementById('jsonv').textContent = json;
     document.getElementById('qr-section').style.display = 'block';

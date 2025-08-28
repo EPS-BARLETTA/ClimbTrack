@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ClimbTrack — Aide</title>
 <link rel="stylesheet" href="style.css">
 </head>
@@ -24,13 +24,13 @@
         <div class="actions"><a class="btn blue" href="identite.html">📝 Identification</a></div>
       </div>
       <div class="card">
-        <h2>2) Choisir</h2>
-        <p class="lead">Sélectionne Bloc, Difficulté ou Vitesse.</p>
+        <h2>2) Pratique</h2>
+        <p class="lead">Bloc • Difficulté • Vitesse • Créateur de voie</p>
         <div class="actions"><a class="btn blue" href="menu.html">🧭 Ouvrir le menu</a></div>
       </div>
       <div class="card">
-        <h2>3) Générer le QR</h2>
-        <p class="lead">Un QR <strong>JSON</strong> s’affiche → scanner avec <strong>ScanProf</strong>.</p>
+        <h2>3) QR</h2>
+        <p class="lead">Le QR est <strong>plat</strong> (une info = une colonne). Scan multiple élèves OK.</p>
       </div>
     </div>
 
@@ -38,35 +38,24 @@
       <div class="card">
         <h3>🟨🟩🟦🟥 Bloc</h3>
         <ul>
-          <li>Choisis une <strong>couleur</strong>, saisis le <strong>numéro</strong>.</li>
-          <li>Ajoute chaque réussite à ta <strong>liste</strong>.</li>
-          <li>“Générer le QR” en fin de séance.</li>
+          <li>Couleur + numéro → <em>Bloc1=bleu-5, Bloc2=vert-3…</em></li>
+          <li>QR : <code>Nom, Prenom, Classe, App, Type, Bloc1, Bloc2, ...</code></li>
         </ul>
       </div>
       <div class="card">
         <h3>🧗 Difficulté</h3>
         <ul>
-          <li>Saisis la <strong>cotation</strong>, le <strong>relais (X)</strong>, le <strong>style</strong> : moulinette / en tête / mouli‑tête.</li>
-          <li>Résultat : <strong>réussie</strong> ou <strong>non terminée</strong> + <em>motif</em> si besoin.</li>
-          <li>Ajoute à la <strong>liste de séance</strong> puis génère le QR.</li>
+          <li>Chaque réalisation devient une colonne : <em>Diff1="6a+|X5|en_tete|OK"</em></li>
+          <li>QR : <code>Nom, Prenom, Classe, App, Type, Diff1, Diff2, ...</code></li>
         </ul>
       </div>
       <div class="card">
         <h3>⚡ Vitesse</h3>
         <ul>
-          <li>Ajoute tes <strong>essais</strong> (saisie manuelle ou <em>chrono intégré</em> si besoin).</li>
-          <li>Le <strong>meilleur temps</strong> est automatiquement retenu dans le QR.</li>
+          <li>Essai1, Essai2, … + <strong>BestTemps</strong> (Nom/Prénom/Classe en premier).</li>
+          <li>QR : <code>Nom, Prenom, Classe, App, Type, Essai1, Essai2, BestTemps...</code></li>
         </ul>
       </div>
-    </div>
-
-    <div class="card" style="margin-top:12px;">
-      <h3>Format QR (exemple)</h3>
-      <pre class="pre">
-{"App":"ClimbTrack","Type":"difficulte","Nom":"Dupont","Prenom":"Alice","Classe":"2ndeB",
-"Seance":[{"Cotation":"6a+","Relais":5,"Style":"en_tete","Resultat":"reussie"}],"DateISO":"..."}
-      </pre>
-      <p class="small">Les colonnes s’adaptent automatiquement dans <em>ScanProf</em>.</p>
     </div>
   </div>
   <footer><div class="container"><div class="footer-inner"></div></div></footer>

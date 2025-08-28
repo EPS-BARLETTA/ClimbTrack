@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ClimbTrack — Difficulté</title>
 <link rel="stylesheet" href="style.css">
 </head>
@@ -29,7 +29,7 @@
             <select id="d_style">
               <option value="moulinette">Moulinette</option>
               <option value="en_tete">En tête</option>
-              <option value="mouli_tete">Mouli‑tête</option>
+              <option value="mouli_tete">Mouli-tête</option>
             </select>
           </label>
           <label>Résultat
@@ -42,7 +42,7 @@
             <label>Motif principal
               <select id="d_motif">
                 <option value="chute_degaine">Chute à la dégaine (préciser X)</option>
-                <option value="autre_prise">Utilisation d'une autre prise</option>
+                <option value="autre_prise">Autre prise</option>
                 <option value="fatigue">Fatigue</option>
                 <option value="peur">Peur</option>
                 <option value="technique">Difficulté technique</option>
@@ -104,7 +104,7 @@
         <td>${it.Relais??''}</td>
         <td>${it.Style}</td>
         <td>${it.Resultat}</td>
-        <td>${it.Motif||''} ${it.Details?(' - '+it.Details):''}</td>
+        <td>${(it.Motif||'')}${it.Details?(' - '+it.Details):''}</td>
         <td><button class="btn red" data-i="${idx}">Supprimer</button></td>`;
       tbody.appendChild(tr);
     });
@@ -131,14 +131,23 @@
   };
   document.getElementById('btn-clear').onclick = ()=>{ list.length = 0; render(); };
 
+  function itemToStr(it){
+    let s = `${it.Cotation}|X${it.Relais}|${it.Style}`;
+    if(it.Resultat==='reussie'){ s += '|OK'; }
+    else { s += '|NT'; if(it.Motif){ s += ':'+it.Motif; } if(it.Details){ s += `(${it.Details})`; } }
+    return s;
+  }
+
   document.getElementById('btn-qr').onclick = ()=>{
     if(list.length===0){ alert('Ajoute au moins une réalisation'); return; }
-    const payload = {
-      App:'ClimbTrack', Type:'difficulte',
-      Nom:id.Nom, Prenom:id.Prenom, Classe:id.Classe,
-      Seance: list,
-      DateISO: nowISO()
-    };
+    const payload = {};
+    // identity first
+    payload.Nom = id.Nom; payload.Prenom = id.Prenom; payload.Classe = id.Classe;
+    payload.App = 'ClimbTrack'; payload.Type = 'difficulte';
+    for(let i=0;i<list.length;i++){
+      payload['Diff'+(i+1)] = itemToStr(list[i]); // one realization per column
+    }
+    payload.DateISO = nowISO();
     const {json} = makeQR(document.getElementById('qrd'), payload);
     document.getElementById('jsond').textContent = json;
     document.getElementById('qr-section').style.display = 'block';
