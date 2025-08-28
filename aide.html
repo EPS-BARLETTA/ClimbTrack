@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ClimbTrack — Aide</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="main-wrap">
+  <div class="container">
+    <div class="headerbar">
+      <div class="logo">🧗 <span class="highlight">ClimbTrack</span></div>
+      <div class="right">
+        <a class="btn green" href="menu.html">🏠 Menu</a>
+        <a class="btn amber" href="securite.html">🦺 Sécurité</a>
+      </div>
+    </div>
+    <div class="card">
+      <h1>❓ Aide</h1>
+      <p class="lead">ClimbTrack génère un <strong>QR code JSON</strong> compatible ScanProf pour centraliser les résultats.</p>
+      <h3>1) S’identifier</h3>
+      <p>Depuis l’accueil, renseigne <strong>Nom, Prénom, Classe</strong>. Tu arrives ensuite sur le <em>Menu</em>.</p>
+      <h3>2) Choisir une pratique</h3>
+      <ul>
+        <li><strong>Bloc :</strong> choisis une <em>couleur</em> (jaune, vert, bleu, rouge) puis un <em>numéro</em> → “Ajouter à ma liste” pour chaque réussite. “Générer QR” à la fin.</li>
+        <li><strong>Difficulté :</strong> indique la <em>voie</em>, la <em>cotation</em>, le <em>relais (X)</em>, puis <em>Résultat</em> et <em>Motif</em> si non terminé → “Générer QR”.</li>
+        <li><strong>Vitesse :</strong> saisis un temps (mm:ss.cc). Option : <em>Chrono intégré</em> si ton mur n’a pas de chrono.</li>
+      </ul>
+      <h3>3) Scanner avec ScanProf</h3>
+      <p>Le QR s’affiche à l’écran. L’enseignant scanne avec <strong>ScanProf</strong> pour récupérer toutes les infos de la séance.</p>
+      <p class="small">Clés JSON : <code>{"App":"ClimbTrack","Type":"bloc|difficulte|vitesse","Nom","Prenom","Classe", ...}</code></p>
+    </div>
+  </div>
+  <footer><div class="container"><div class="footer-inner"></div></div></footer>
+</div>
+<script type="module">
+  import {renderFooter} from './app.js'; renderFooter();
+</script>
+</body>
+</html>

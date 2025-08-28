@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ClimbTrack — Accueil</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="main-wrap">
+  <div class="container">
+    <div class="card">
+      <h1>🧗‍♀️ <span class="highlight">ClimbTrack</span></h1>
+      <p class="lead">Application EPS escalade (Bloc • Difficulté • Vitesse) — QR code compatible <strong>ScanProf</strong>.</p>
+
+      <div class="row row-2" style="margin-top:18px;">
+        <div class="card">
+          <h2>Identification élève</h2>
+          <p class="small">Renseigne d’abord ton identité pour la séance.</p>
+          <form id="id-form">
+            <label>Nom<input id="nom" required placeholder="Dupont"></label>
+            <label>Prénom<input id="prenom" required placeholder="Alice"></label>
+            <label>Classe<input id="classe" required placeholder="2nde B"></label>
+            <div class="actions">
+              <button class="btn green" type="submit">🚀 Démarrer</button>
+              <a class="btn blue" href="aide.html">❓ Aide</a>
+              <a class="btn amber" href="securite.html">🦺 Fiche sécurité</a>
+            </div>
+          </form>
+        </div>
+        <div class="card">
+          <h2>Infos</h2>
+          <p>Après identification, tu accèdes au menu :</p>
+          <ul>
+            <li><strong>Bloc</strong> — coche les blocs réussis (par couleur et numéro).</li>
+            <li><strong>Difficulté</strong> — voie, cotation, relais (X), résultat et motif si non terminé.</li>
+            <li><strong>Vitesse</strong> — renseigne un temps <em>(saisie manuelle)</em> ou utilise le <em>chrono intégré</em> si ton mur n’en a pas.</li>
+          </ul>
+          <p>Chaque saisie génère un <strong>QR code JSON</strong> scannable avec <em>ScanProf</em>.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer><div class="container"><div class="footer-inner"></div></div></footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+<script type="module">
+  import {saveIdentite, renderFooter} from './app.js';
+  renderFooter();
+  const form = document.getElementById('id-form');
+  form.addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const Nom = document.getElementById('nom').value.trim();
+    const Prenom = document.getElementById('prenom').value.trim();
+    const Classe = document.getElementById('classe').value.trim();
+    if(!Nom || !Prenom || !Classe) return;
+    saveIdentite({ Nom, Prenom, Classe });
+    window.location.href = 'menu.html';
+  });
+</script>
+</body>
+</html>

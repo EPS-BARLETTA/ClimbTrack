@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ClimbTrack — Vitesse</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="main-wrap">
+  <div class="container">
+    <div class="headerbar">
+      <div class="logo">⚡ <span class="highlight">Vitesse</span></div>
+      <div class="right">
+        <a class="btn green" href="menu.html">🏠 Menu</a>
+        <a class="btn violet" href="aide.html">❓ Aide</a>
+        <a class="btn amber" href="securite.html">🦺 Sécurité</a>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Temps de voie</h2>
+      <p class="lead" id="idline"></p>
+
+      <div class="row row-2">
+        <div class="card">
+          <h3>⏱️ Saisie manuelle</h3>
+          <div class="row row-3">
+            <label>Minutes
+              <input id="vm" type="number" min="0" max="59" placeholder="00">
+            </label>
+            <label>Secondes
+              <input id="vs" type="number" min="0" max="59" placeholder="00">
+            </label>
+            <label>Centièmes
+              <input id="vc" type="number" min="0" max="99" placeholder="00">
+            </label>
+          </div>
+          <label>Voie (optionnel)<input id="vvoie" placeholder="Ex. Vitesse officielle, ligne 2"></label>
+          <div class="actions">
+            <button class="btn blue" id="btn-v-manual">🧾 Préparer le QR</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>⏱️ Chrono intégré (option)</h3>
+          <p class="small">À utiliser seulement si votre mur n’a pas de chrono.</p>
+          <div style="font-size:2rem; font-weight:800; margin:10px 0;" id="vtimer">00:00.00</div>
+          <div class="actions">
+            <button class="btn green" id="vstart">Lancer</button>
+            <button class="btn amber" id="vstop">Stop</button>
+            <button class="btn red" id="vreset">Réinitialiser</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="qr-section" style="display:none; margin-top:16px;">
+        <h3>📷 QR prêt</h3>
+        <div class="qr-wrap">
+          <div class="qr-box" id="qrv"></div>
+          <pre class="pre" id="jsonv"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer><div class="container"><div class="footer-inner"></div></div></footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script type="module">
+  import {getIdentite, ensureIdentite, renderFooter, formatTime, makeQR, nowISO} from './app.js';
+  renderFooter(); ensureIdentite();
+  const id = getIdentite();
+  document.getElementById('idline').innerHTML = `Élève : <strong>${id.Prenom} ${id.Nom}</strong> — <span class='badge'>Classe : ${id.Classe}</span>`;
+
+  const vm = document.getElementById('vm');
+  const vs = document.getElementById('vs');
+  const vc = document.getElementById('vc');
+  const vvoie = document.getElementById('vvoie');
+  const qrs = document.getElementById('qr-section');
+  const qrel = document.getElementById('qrv');
+  const jsonel = document.getElementById('jsonv');
+
+  document.getElementById('btn-v-manual').addEventListener('click', ()=>{
+    const Temps = formatTime(vm.value, vs.value, vc.value);
+    const payload = {
+      App:'ClimbTrack', Type:'vitesse',
+      Nom:id.Nom, Prenom:id.Prenom, Classe:id.Classe,
+      Temps, Voie: vvoie.value || null,
+      DateISO: nowISO()
+    };
+    const {json} = makeQR(qrel, payload);
+    jsonel.textContent = json;
+    qrs.style.display = 'block';
+    window.scrollTo({top:document.body.scrollHeight, behavior:'smooth'});
+  });
+
+  // Simple stopwatch
+  let t0 = 0, raf = null, running=false;
+  function tick(){
+    const dt = Date.now() - t0;
+    const centi = Math.floor(dt/10)%100;
+    const sec = Math.floor(dt/1000)%60;
+    const min = Math.floor(dt/60000);
+    document.getElementById('vtimer').textContent = formatTime(min,sec,centi);
+    if(running) raf = requestAnimationFrame(tick);
+  }
+  document.getElementById('vstart').onclick = ()=>{ if(!running){ running=true; t0 = Date.now(); raf = requestAnimationFrame(tick);} };
+  document.getElementById('vstop').onclick = ()=>{
+    if(!running) return;
+    running=false; if(raf) cancelAnimationFrame(raf);
+    const txt = document.getElementById('vtimer').textContent;
+    vm.value = txt.slice(0,2); vs.value = txt.slice(3,5); vc.value = txt.slice(6,8);
+  };
+  document.getElementById('vreset').onclick = ()=>{
+    running=false; if(raf) cancelAnimationFrame(raf);
+    document.getElementById('vtimer').textContent = '00:00.00';
+    vm.value = vs.value = vc.value = '';
+  };
+</script>
+</body>
+</html>

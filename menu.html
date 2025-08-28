@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ClimbTrack — Menu</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="main-wrap">
+  <div class="container">
+    <div class="headerbar">
+      <div class="logo">🧗‍♂️ <span class="highlight">ClimbTrack</span></div>
+      <div class="right">
+        <button class="btn green" id="btn-home">🏠 Accueil</button>
+        <button class="btn violet" id="btn-help">❓ Aide</button>
+        <button class="btn amber" id="btn-securite">🦺 Sécurité</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Choisis une pratique</h2>
+      <p class="lead" id="idline"></p>
+      <div class="menu-grid" style="margin-top:12px;">
+        <div class="menu-card">
+          <div>
+            <div class="title">🟨🟩🟦🟥 Bloc</div>
+            <p>Enregistre les blocs réussis (par couleur + numéro). Idéal si les blocs ne sont pas nommés.</p>
+          </div>
+          <a class="btn blue" href="bloc.html">Aller au Bloc</a>
+        </div>
+        <div class="menu-card">
+          <div>
+            <div class="title">🧗 Difficulté</div>
+            <p>Voie, cotation, relais (X), résultat (réussie/essayée), motif si non terminé.</p>
+          </div>
+          <a class="btn blue" href="difficulte.html">Aller à la Difficulté</a>
+        </div>
+        <div class="menu-card">
+          <div>
+            <div class="title">⚡ Vitesse</div>
+            <p>Temps saisi manuellement, ou utilise le chrono intégré si ton mur n’a pas de chrono.</p>
+          </div>
+          <a class="btn blue" href="vitesse.html">Aller à la Vitesse</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer><div class="container"><div class="footer-inner"></div></div></footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+<script type="module">
+  import {getIdentite, ensureIdentite, renderFooter, headerInit} from './app.js';
+  renderFooter(); headerInit(); ensureIdentite();
+  const id = getIdentite();
+  document.getElementById('idline').innerHTML = `Élève : <strong>${id.Prenom} ${id.Nom}</strong> — <span class="badge">Classe : ${id.Classe}</span>`;
+  document.getElementById('btn-home').onclick = ()=>{ window.location.href='index.html'; };
+</script>
+</body>
+</html>
