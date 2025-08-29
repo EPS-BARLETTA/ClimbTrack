@@ -1,25 +1,30 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Escalade V5+</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ClimbTrack — Accueil</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="app-header">
-    <h1>🧗 Escalade V5+</h1>
-    <p>Session élève → résultats vitesse, bloc, difficulté + croquis de voie (photo annotée).</p>
-  </header>
-
-  <main class="container">
-    <div class="grid2">
-      <a class="btn primary" href="session.html">Démarrer une session</a>
-      <a class="btn" href="securite.html">Fiche sécurité</a>
-      <a class="btn" href="aide.html">Aide</a>
+<div class="main-wrap">
+  <div class="container">
+    <div class="hero card">
+      <div>
+        <div class="title">ClimbTrack</div>
+        <div class="subtitle">Bloc • Difficulté • Vitesse — QR compatibles <strong>ScanProf</strong></div>
+        <div class="cta">
+          <a class="btn green" href="identite.html" style="font-size:1.25rem; padding:18px 30px;">🚀 Démarrer</a>
+          <div class="rowbtn">
+            <a class="btn blue" href="aide.html">❓ Aide</a>
+            <a class="btn amber" href="securite.html">🦺 Fiche sécurité</a>
+          </div>
+        </div>
+      </div>
     </div>
-  </main>
-
-  <footer class="app-footer">© EPS – Outil “Escalade V5+”</footer>
+  </div>
+  <footer><div class="container"><div class="footer-inner"></div></div></footer>
+</div>
+<script type="module"> import {renderFooter} from './app.js'; renderFooter(); </script>
 </body>
 </html>
