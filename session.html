@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>Session – Escalade V5+</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+  <header class="app-header">
+    <div class="flex" style="justify-content:space-between">
+      <h1>🧗 Session – Escalade V5+</h1>
+      <div class="flex">
+        <a class="btn" href="securite.html">Fiche sécurité</a>
+        <a class="btn" href="index.html">Accueil</a>
+      </div>
+    </div>
+  </header>
+  <main class="container">
+    <section class="card">
+      <h2>👤 Infos élève</h2>
+      <div class="row">
+        <div><label>Nom<input id="nom" type="text" autocomplete="family-name"/></label></div>
+        <div><label>Prénom<input id="prenom" type="text" autocomplete="given-name"/></label></div>
+        <div>
+          <label>Classe
+            <input id="classe" type="text" placeholder="ex: 2nde 3"/>
+          </label>
+        </div>
+        <div>
+          <label>Sexe
+            <select id="sexe">
+              <option value="">—</option>
+              <option>F</option>
+              <option>M</option>
+            </select>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>🏃 Vitesse</h2>
+      <div class="toolbar">
+        <button class="btn" id="addTimeBtn">+ Ajouter un temps (s)</button>
+        <span class="small">Saisir en secondes (ex: 4.72)</span>
+      </div>
+      <table id="timesTable">
+        <thead><tr><th>#</th><th>Temps (s)</th><th>Actions</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>🧱 Bloc</h2>
+      <div class="row">
+        <div><label>Tops (réussites)<input id="bloc_tops" type="number" min="0" step="1" value="0"></label></div>
+        <div><label>Zones<input id="bloc_zones" type="number" min="0" step="1" value="0"></label></div>
+        <div><label>Essais (total)<input id="bloc_essais" type="number" min="0" step="1" value="0"></label></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>🧗‍♀️ Difficulté</h2>
+      <div class="row">
+        <div><label>Cot &eacute; (grade)<input id="diff_cote" type="text" placeholder="ex: 6a+"/></label></div>
+        <div><label>Hauteur atteinte (%)<input id="diff_pct" type="number" min="0" max="100" step="1" value="0"/></label></div>
+        <div><label>Chute ?
+          <select id="diff_chute"><option value="non">Non</option><option value="oui">Oui</option></select>
+        </label></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>🖼️ Dessiner la voie (photo + annotation)</h2>
+      <div class="row">
+        <div>
+          <label>Photo du mur (ou prendre une photo)
+            <input id="photoInput" type="file" accept="image/*" capture="environment">
+          </label>
+        </div>
+        <div>
+          <div class="toolbar">
+            <button class="btn" id="modeDrawBtn">✍️ Mode dessin</button>
+            <button class="btn" id="modeCircleBtn">⭕ Mode cercles</button>
+            <button class="btn" id="fsBtn">⛶ Plein écran</button>
+            <button class="btn" id="clearBtn">🧹 Effacer</button>
+            <button class="btn" id="downloadPngBtn">⬇️ Télécharger l’image</button>
+            <button class="btn" id="saveRouteBtn">💾 Enregistrer (local)</button>
+          </div>
+        </div>
+      </div>
+      <div id="canvasWrap" style="position:relative">
+        <canvas id="canvas" class="annot" width="1080" height="1440"></canvas>
+      </div>
+      <div id="fsWrap" class="fullscreen-wrap">
+        <canvas id="fsCanvas" class="annot" width="1080" height="1440"></canvas>
+        <div style="position:fixed;right:10px;top:10px;display:flex;gap:8px">
+          <button class="btn" id="exitFsBtn">Quitter</button>
+        </div>
+      </div>
+      <p class="small">En mode cercles, touchez pour ajouter une prise, glissez pour la déplacer. Double‑tap pour supprimer.</p>
+    </section>
+
+    <section class="card">
+      <h2>📦 Générer le QR de séance</h2>
+      <div class="toolbar">
+        <button class="btn primary" id="genBtn">Générer le QR</button>
+        <button class="btn" id="copyJsonBtn">Copier JSON</button>
+        <button class="btn" id="dlJsonBtn">Télécharger JSON</button>
+      </div>
+      <div class="flex">
+        <div>
+          <div class="badge">QR (via service web)</div>
+          <img id="qrImg" alt="QR de la séance" style="display:block;max-width:280px;border-radius:12px;border:1px solid #2a2f3a;margin-top:8px"/>
+          <div class="small">Si le QR ne s'affiche pas, vérifiez la connexion internet.</div>
+        </div>
+        <div style="flex:1;min-width:260px">
+          <div class="badge">JSON</div>
+          <pre id="jsonOut" class="json"></pre>
+        </div>
+      </div>
+    </section>
+
+  </main>
+  <footer class="app-footer">© EPS – Outil “Escalade V5+”</footer>
+
+  <script src="session.js"></script>
+</body>
+</html>

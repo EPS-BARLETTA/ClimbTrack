@@ -1,64 +1,60 @@
 <!doctype html>
 <html lang="fr">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ClimbTrack — Fiche Sécurité</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fiche sécurité – Escalade (Vauban)</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="main-wrap">
-  <div class="container">
-    <div class="headerbar">
-      <div class="logo">🦺 <span class="highlight">Fiche Sécurité</span></div>
-      <div class="right">
-        <a class="btn green" href="menu.html">🏠 Menu</a>
-        <a class="btn violet" href="aide.html">❓ Aide</a>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>✅ Consignes générales</h2>
+  <header class="app-header"><h1>🛡️ Fiche sécurité – Escalade</h1></header>
+  <main class="container">
+    <section class="card">
+      <h2>Généralités</h2>
       <ul>
-        <li>Échauffement complet (doigts, poignets, épaules, hanches).</li>
-        <li>Chaussures adaptées, cheveux attachés, bijoux retirés.</li>
-        <li>Respect des zones de grimpe et de réception.</li>
-        <li>Matériel vérifié et adapté à la pratique.</li>
+        <li>Retirer bijoux et attacher les cheveux longs. Rester calme, pas d’agitation.</li>
+        <li>Ne pas marcher sur les cordes. Dégager la zone de réception (tapis + objets).</li>
+        <li>Grimper uniquement avec l’autorisation du professeur et sans stationner sous un grimpeur.</li>
+        <li>Utiliser uniquement les prises : ne jamais s’agripper aux dégaines, plaquettes, cordes ou relais.</li>
+        <li>Responsabilité partagée grimpeur/assureur : confiance et vigilance réciproques.</li>
       </ul>
-    </div>
+    </section>
 
-    <div class="row row-3" style="margin-top:12px;">
-      <div class="card">
-        <h3>🟨 Bloc</h3>
-        <ul>
-          <li>Un seul grimpeur par zone de chute.</li>
-          <li>Réception pieds-joints, genoux fléchis, mains devant.</li>
-          <li>Ne pas traverser sous un grimpeur.</li>
-        </ul>
-      </div>
-      <div class="card">
-        <h3>🧗 Difficulté</h3>
-        <p><strong>Styles :</strong> <span class="badge">moulinette</span> <span class="badge">en tête</span> <span class="badge">mouli-tête</span></p>
-        <ul>
-          <li><strong>Moulinette :</strong> corde en place, tension maîtrisée.</li>
-          <li><strong>En tête :</strong> clipper chaque dégaine, chute contrôlée.</li>
-          <li><strong>Mouli-tête :</strong> alternance/mixte selon consignes.</li>
-          <li>Vérif réciproque : baudrier–nœud–assureur.</li>
-          <li>Assurage dynamique, mains sur brin frein, annonces claires.</li>
-        </ul>
-      </div>
-      <div class="card">
-        <h3>⚡ Vitesse</h3>
-        <ul>
-          <li>Zone de départ dégagée, pas de dépassement/croisement.</li>
-          <li>Descente contrôlée, pas de saut au sol.</li>
-          <li>Sans chrono mural : repère de départ clair + chrono intégré.</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-  <footer><div class="container"><div class="footer-inner"></div></div></footer>
-</div>
-<script type="module"> import {renderFooter} from './app.js'; renderFooter(); </script>
+    <section class="card">
+      <h2>Bloc (sans corde)</h2>
+      <ul>
+        <li>Binôme grimpeur–pareur : pas au‑dessus de la ligne noire (~3 m).</li>
+        <li>Le pareur accompagne et protège la réception (mains aux hanches), sans retenir ni porter.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Avec corde (moulinette)</h2>
+      <ul>
+        <li>Trinôme : grimpeur / assureur / contre‑assureur (poids proches).</li>
+        <li><b>Partners check</b> avant de grimper : nœud en bout de corde, relais (2 mousquetons, brins séparés), baudriers, encordement (nœud de 8 + arrêt), système d’assurage au pontet (mousqueton verrouillé), placements de l’assureur et du contre‑assureur.</li>
+        <li>Départ uniquement après validation du professeur.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Monter / Descendre</h2>
+      <ul>
+        <li>Assurer en 5 temps sans lâcher le brin de vie ; mains loin du système d’assurage.</li>
+        <li>Assurer « sec » au départ (corde tendue), puis léger mou si besoin.</li>
+        <li>Ne pas dépasser 3 m tant que le nœud « fusible » n’a pas été posé par le professeur (appel contre‑assureur).</li>
+        <li>Pour descendre : « bloque / relais », se mettre en tension dans le baudrier, annoncer « descente » ; descente contrôlée et régulière.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Communication</h2>
+      <p>Mots‑clés <em>grimpeur</em> : « Départ », « Avale », « Sec », « Mou », « Bloque », « Attention », « Relais », « Descente ».<br>
+         Réponses <em>assureur/pareur</em> : « OK », « STOP ».</p>
+    </section>
+
+    <p class="small">Document adapté pour usage pédagogique au Lycée Vauban.</p>
+    <p><a class="btn" href="index.html">← Retour</a></p>
+  </main>
 </body>
 </html>

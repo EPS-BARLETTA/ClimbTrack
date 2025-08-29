@@ -1,65 +1,22 @@
 <!doctype html>
 <html lang="fr">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ClimbTrack — Aide</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aide – Escalade V5+</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="main-wrap">
-  <div class="container">
-    <div class="headerbar">
-      <div class="logo">❓ <span class="highlight">Aide ClimbTrack</span></div>
-      <div class="right">
-        <a class="btn green" href="menu.html">🏠 Menu</a>
-        <a class="btn amber" href="securite.html">🦺 Sécurité</a>
-      </div>
-    </div>
-
-    <div class="row row-3">
-      <div class="card">
-        <h2>1) S’identifier</h2>
-        <p class="lead">Nom, Prénom, Classe → accès au menu.</p>
-        <div class="actions"><a class="btn blue" href="identite.html">📝 Identification</a></div>
-      </div>
-      <div class="card">
-        <h2>2) Pratique</h2>
-        <p class="lead">Bloc • Difficulté • Vitesse • Créateur de voie</p>
-        <div class="actions"><a class="btn blue" href="menu.html">🧭 Ouvrir le menu</a></div>
-      </div>
-      <div class="card">
-        <h2>3) QR</h2>
-        <p class="lead">Le QR est <strong>plat</strong> (une info = une colonne). Scan multiple élèves OK.</p>
-      </div>
-    </div>
-
-    <div class="row row-3" style="margin-top:12px;">
-      <div class="card">
-        <h3>🟨🟩🟦🟥 Bloc</h3>
-        <ul>
-          <li>Couleur + numéro → <em>Bloc1=bleu-5, Bloc2=vert-3…</em></li>
-          <li>QR : <code>Nom, Prenom, Classe, App, Type, Bloc1, Bloc2, ...</code></li>
-        </ul>
-      </div>
-      <div class="card">
-        <h3>🧗 Difficulté</h3>
-        <ul>
-          <li>Chaque réalisation devient une colonne : <em>Diff1="6a+|X5|en_tete|OK"</em></li>
-          <li>QR : <code>Nom, Prenom, Classe, App, Type, Diff1, Diff2, ...</code></li>
-        </ul>
-      </div>
-      <div class="card">
-        <h3>⚡ Vitesse</h3>
-        <ul>
-          <li>Essai1, Essai2, … + <strong>BestTemps</strong> (Nom/Prénom/Classe en premier).</li>
-          <li>QR : <code>Nom, Prenom, Classe, App, Type, Essai1, Essai2, BestTemps...</code></li>
-        </ul>
-      </div>
-    </div>
-  </div>
-  <footer><div class="container"><div class="footer-inner"></div></div></footer>
-</div>
-<script type="module"> import {renderFooter} from './app.js'; renderFooter(); </script>
+  <header class="app-header"><h1>❓ Aide – Escalade V5+</h1></header>
+  <main class="container">
+    <h2>Fonctions clés</h2>
+    <ul>
+      <li><b>Photo + Annotation plein écran</b> : bouton <em>Plein écran</em>. Mode <em>Dessiner</em> (doigt/stylet) et <em>Cercles</em> (prises).</li>
+      <li><b>Déplacement des cercles</b> : toucher-glisser ; <b>double‑tap</b> pour supprimer.</li>
+      <li><b>Enregistrer la voie</b> : sauvegarde locale + possibilité de télécharger l’image annotée (PNG).</li>
+      <li><b>QR séance</b> : encode un JSON unique (compatible ScanProf). L’image n’est pas dans le QR (poids) : un identifiant de voie est stocké.</li>
+    </ul>
+    <p><a class="btn" href="index.html">← Retour</a></p>
+  </main>
 </body>
 </html>
