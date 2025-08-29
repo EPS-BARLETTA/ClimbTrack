@@ -1,16 +1,52 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>ClimbTrack — QR de séance</title><link rel="stylesheet" href="style.css"></head>
-<body><div class="main-wrap"><div class="container"><div class="headerbar"><div class="logo">📦 <span class="highlight">QR de séance</span></div><div class="right"><a class="btn green big" href="menu.html">🏠 Menu</a><a class="btn blue big" href="aide.html">❓ Aide</a></div></div>
-<div class="card"><h2>Récapitulatif</h2><p class="lead" id="idline"></p>
-<div class="row row-3"><div class="card"><h3>⚡ Vitesse</h3><div id="vzone" class="small">—</div></div><div class="card"><h3>🧗 Difficulté</h3><div id="dzone" class="small">—</div></div><div class="card"><h3>🧱 Bloc</h3><div id="bzone" class="small">—</div></div></div>
-<div class="actions"><button class="btn green big" id="btn-qr">📷 Générer le QR unique</button><button class="btn red big" id="btn-clear">♻️ Vider ma séance</button></div>
-<div id="qr-section" style="display:none;margin-top:16px;"><h3>📷 QR prêt</h3><div class="qr-wrap"><div class="qr-box" id="qrs"></div><pre class="pre" id="jsons"></pre></div></div>
-</div></div><footer><div class="container"><div class="footer-inner"></div></div></footer>
+<!doctype html><html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ClimbTrack — QR de séance</title><link rel="stylesheet" href="style.css"></head>
+<body><div class="main-wrap"><div class="container">
+  <div class="headerbar"><div class="logo">📦 <span class="highlight">QR de séance</span></div>
+    <div class="right"><a class="btn green big" href="menu.html">🏠 Menu</a><a class="btn blue big" href="aide.html">❓ Aide</a></div></div>
+  <div class="card"><h2>Récapitulatif</h2><p class="lead" id="idline"></p>
+
+    <div class="row row-2">
+      <div class="card"><h3>🧱 Bloc</h3><div id="bzone" class="small">—</div></div>
+      <div class="card"><h3>🧗 Difficulté</h3><div id="dzone" class="small">—</div></div>
+    </div>
+    <div class="row row-2" style="margin-top:12px;">
+      <div class="card"><h3>⚡ Vitesse</h3><div id="vzone" class="small">—</div></div>
+      <div class="card"><h3>📷 Créateur de voie</h3><div class="small">Crée ta voie → <a class="btn edit" href="route-editor.html">Ouvrir</a> (non inclus dans le QR)</div></div>
+    </div>
+
+    <div class="center" style="margin-top:16px;">
+      <button class="btn green big" id="btn_qr">📷 Un seul QR pour tout</button>
+      <p class="note">Fais scanner ce QR par ton/ta prof → tout ton travail de la séance.</p>
+      <div class="card center" style="display:inline-block">
+        <label><input type="checkbox" id="ascii"> Compatibilité ScanProf (ASCII)</label>
+        <label><input type="checkbox" id="nolabel"> Format simple (sans étiquettes)</label>
+      </div>
+      <div id="qr-section" style="display:none;margin-top:12px;">
+        <div class="qr-wrap" style="justify-content:center;"><div class="qr-box" id="qrs"></div></div>
+        <pre class="pre" id="jsons"></pre>
+      </div>
+    </div>
+  </div></div>
+  <footer><div class="container"><div class="footer-inner"></div></div></footer>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script type="module">
-import {getIdentite,ensureIdentite,renderFooter,makeQR,loadSeance,clearSeance} from './app.js';renderFooter();ensureIdentite();const id=getIdentite();idline.innerHTML=`Élève : <strong>${id.Prenom} ${id.Nom}</strong> — <span class='badge'>Classe : ${id.Classe}</span>`;
-function render(){const s=loadSeance();vzone.textContent=(s.vitesse&&s.vitesse.best)?`BestTemps=${s.vitesse.best} • NbEssais=${s.vitesse.count}`:'—';
-dzone.textContent=(s.difficulte&&s.difficulte.length)?s.difficulte.map((x,i)=>`D${i+1}:${x.Cotation}|X${x.Relais}|${x.Style}|${x.Resultat==='reussie'?'OK':'NT:'+ (x.MotifTxt||'')}`).join('  |  '):'—';
-bzone.textContent=(s.bloc&&s.bloc.length)?s.bloc.map((x,i)=>`B${i+1}:${x.Couleur}-${x.Numero}`).join('  |  '):'—';}render();
-btn-clear.onclick=()=>{if(confirm('Effacer toute la séance ?')){clearSeance();render();}};
-btn-qr.onclick=()=>{const s=loadSeance();let cells=[id.Nom,id.Prenom,id.Classe];if(s.vitesse&&s.vitesse.best){cells.push(`V_BestTemps=${s.vitesse.best}`,`V_NbEssais=${s.vitesse.count||0}`);}if(s.bloc&&s.bloc.length){s.bloc.forEach((b,i)=>cells.push(`B${i+1}=${b.Couleur}-${b.Numero}`));}if(s.difficulte&&s.difficulte.length){s.difficulte.forEach((d,i)=>{let sstr=`${d.Cotation}|X${d.Relais}|${d.Style}|${d.Resultat==='reussie'?'OK':'NT:'+(d.MotifTxt||'')}`;cells.push(`D${i+1}=${sstr}`);});}const line=cells.join(',');makeQR('qrs',line);jsons.textContent=line;document.getElementById('qr-section').style.display='block';};
+import {getIdentite, ensureIdentite, renderFooter, makeQR, loadSeance, clearSeance, buildCSV} from './app.js';
+renderFooter(); ensureIdentite(); const id=getIdentite(); document.getElementById('idline').innerHTML=`Élève : <strong>${id.Prenom} ${id.Nom}</strong> — <span class='badge'>Classe : ${id.Classe}</span>`;
+function render(){ const s=loadSeance();
+  const vTxt=(s.vitesse&&s.vitesse.best)?`BestTemps=${s.vitesse.best} • NbEssais=${s.vitesse.count}`:'—';
+  vzone.textContent=vTxt;
+  dzone.textContent=(s.difficulte&&s.difficulte.length)?s.difficulte.map((x,i)=>`D${i+1}:${x.Cotation}|X${x.Relais}|${x.Style}|${x.Resultat==='reussie'?'OK':'NT:'+ (x.MotifTxt||'')}`).join('  |  '):'—';
+  bzone.textContent=(s.bloc&&s.bloc.length)?s.bloc.map((x,i)=>`B${i+1}:${x.Couleur}-${x.Numero}`).join('  |  '):'—';
+} render();
+
+document.getElementById('btn_qr').onclick=()=>{
+  const s=loadSeance(); const ascii=document.getElementById('ascii').checked, nolabel=document.getElementById('nolabel').checked;
+  let cells=[id.Nom,id.Prenom,id.Classe];
+  if(s.vitesse && s.vitesse.best){ cells.push(nolabel?`${s.vitesse.best}`, `${s.vitesse.count||0}` : `V_BestTemps=${s.vitesse.best}`, `V_NbEssais=${s.vitesse.count||0}`); }
+  if(s.bloc && s.bloc.length){ s.bloc.forEach((b,i)=>cells.push(nolabel?`${b.Couleur}-${b.Numero}`:`B${i+1}=${b.Couleur}-${b.Numero}`)); }
+  if(s.difficulte && s.difficulte.length){ s.difficulte.forEach((d,i)=>{ const sstr = `${d.Cotation}|X${d.Relais}|${d.Style}|${d.Resultat==='reussie'?'OK':'NT:'+ (d.MotifTxt||'')}`; cells.push(nolabel?`${sstr}`:`D${i+1}=${sstr}`); }); }
+  const line = buildCSV(cells,{ascii});
+  makeQR('qrs', line); jsons.textContent=line; document.getElementById('qr-section').style.display='block';
+};
 </script></body></html>

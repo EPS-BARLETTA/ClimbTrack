@@ -1,22 +1,61 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>ClimbTrack — Vitesse</title><link rel="stylesheet" href="style.css"></head>
-<body><div class="main-wrap"><div class="container"><div class="headerbar"><div class="logo">⚡ <span class="highlight">Vitesse</span></div><div class="right"><a class="btn green big" href="menu.html">🏠 Menu</a><a class="btn blue big" href="aide.html">❓ Aide</a></div></div>
-<div class="card"><h2>Essais & meilleur temps</h2><p class="lead" id="idline"></p>
-<div class="row row-2"><div class="card"><h3>⏱️ Saisie manuelle</h3><div class="row row-3"><label>Minutes<input id="vm" type="number" min="0" max="59" placeholder="00"></label><label>Secondes<input id="vs" type="number" min="0" max="59" placeholder="00"></label><label>Centièmes<input id="vc" type="number" min="0" max="99" placeholder="00"></label></div>
-<div class="actions"><button class="btn blue big" id="btn-add">➕ Ajouter essai</button><button class="btn red big" id="btn-clear">♻️ Vider essais</button></div></div>
-<div class="card"><h3>⏱️ Chrono intégré (option)</h3><p class="small">Uniquement si votre mur n’a pas de chrono.</p><div style="font-size:2.2rem;font-weight:900;margin:10px 0;" id="vtimer">00:00.00</div>
-<div class="actions"><button class="btn green big" id="vstart">Lancer</button><button class="btn amber big" id="vstop">Stop</button><button class="btn red big" id="vreset">Réinit</button><button class="btn blue big" id="btn-add-from-chrono">➕ Ajouter depuis chrono</button></div></div></div>
-<div class="card"><h3>Mes essais</h3><table class="table" id="v_table"><thead><tr><th>#</th><th>Temps</th><th>Action</th></tr></thead><tbody></tbody></table>
-<p class="lead">Meilleur temps : <strong id="best"></strong> • Nb essais : <strong id="nb"></strong></p>
-<div class="actions"><button class="btn green big" id="btn-save">💾 Enregistrer séance</button><button class="btn green big" id="btn-qr">📷 QR Vitesse</button><a class="btn" href="seance.html">➡️ QR de séance</a></div>
-<div id="qr-section" style="display:none;margin-top:16px;"><h3>📷 QR prêt</h3><div class="qr-wrap"><div class="qr-box" id="qrv"></div><pre class="pre" id="jsonv"></pre></div></div>
-</div></div><footer><div class="container"><div class="footer-inner"></div></div></footer>
+<!doctype html><html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ClimbTrack — Vitesse</title><link rel="stylesheet" href="style.css"></head>
+<body><div class="main-wrap"><div class="container">
+  <div class="headerbar"><div class="logo">⚡ <span class="highlight">Vitesse</span></div>
+    <div class="right"><a class="btn green big" href="menu.html">🏠 Menu</a><a class="btn blue big" href="aide.html">❓ Aide</a></div></div>
+  <div class="card"><h2>Essais & meilleur temps</h2><p class="lead" id="idline"></p>
+    <div class="row row-2">
+      <div class="card"><h3>⏱️ Saisie manuelle</h3>
+        <div class="row row-3"><label>Minutes<input id="vm" type="number" min="0" max="59" placeholder="00"></label><label>Secondes<input id="vs" type="number" min="0" max="59" placeholder="00"></label><label>Centièmes<input id="vc" type="number" min="0" max="99" placeholder="00"></label></div>
+        <div class="actions"><button class="btn blue big" id="btn_add">➕ Ajouter essai</button><button class="btn red big" id="btn_clear">♻️ Vider essais</button></div>
+      </div>
+      <div class="card"><h3>⏱️ Chrono intégré (option)</h3><p class="small">Uniquement si votre mur n’a pas de chrono.</p>
+        <div style="font-size:2.2rem;font-weight:900;margin:10px 0;" id="vtimer">00:00.00</div>
+        <div class="actions"><button class="btn green big" id="vstart">Lancer</button><button class="btn amber big" id="vstop">Stop</button><button class="btn red big" id="vreset">Réinit</button><button class="btn blue big" id="btn_add_from_chrono">➕ Ajouter depuis chrono</button></div>
+      </div>
+    </div>
+    <div class="card"><h3>Mes essais</h3><table class="table" id="v_table"><thead><tr><th>#</th><th>Temps</th><th>Action</th></tr></thead><tbody></tbody></table>
+      <p class="lead">Meilleur temps : <strong id="best"></strong> • Nb essais : <strong id="nb"></strong></p>
+      <div class="actions"><button class="btn green big" id="btn_save">💾 Enregistrer séance</button><button class="btn green big" id="btn_qr">📷 QR Vitesse</button><a class="btn" href="seance.html">➡️ QR de séance</a></div>
+      <div class="card">
+        <label><input type="checkbox" id="ascii"> Compatibilité ScanProf (ASCII)</label>
+        <label><input type="checkbox" id="nolabel"> Format simple (sans étiquettes)</label>
+      </div>
+      <div id="qr-section" style="display:none;margin-top:16px;"><h3>📷 QR prêt</h3><div class="qr-wrap"><div class="qr-box" id="qrv"></div><pre class="pre" id="jsonv"></pre></div></div>
+    </div>
+  </div></div>
+  <footer><div class="container"><div class="footer-inner"></div></div></footer>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script type="module">
-import {getIdentite,ensureIdentite,renderFooter,formatTime,parseTimeToCentis,loadSeance,saveSeance,makeQR} from './app.js';renderFooter();ensureIdentite();const id=getIdentite();idline.innerHTML=`Élève : <strong>${id.Prenom} ${id.Nom}</strong> — <span class='badge'>Classe : ${id.Classe}</span>`;
-const runs=[],tbody=document.querySelector('#v_table tbody'),bestEl=best,nbEl=nb;function render(){tbody.innerHTML='';let best=null;runs.forEach((it,i)=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${i+1}</td><td>${it.Temps}</td><td><button class="btn red" data-i="${i}">Supprimer</button></td>`;tbody.appendChild(tr);const v=parseTimeToCentis(it.Temps);if(best===null||v<best.val){best={val:v,txt:it.Temps};}});tbody.querySelectorAll('button[data-i]').forEach(btn=>btn.addEventListener('click',e=>{runs.splice(+e.currentTarget.dataset.i,1);render();}));bestEl.textContent=best?best.txt:'—';nbEl.textContent=runs.length;}
-btn-add.onclick=()=>{const Temps=formatTime(vm.value,vs.value,vc.value);runs.push({Temps});render();};btn-clear.onclick=()=>{runs.length=0;render();};
-let t0=0,raf=null,running=false;function tick(){const dt=Date.now()-t0,centi=Math.floor(dt/10)%100,sec=Math.floor(dt/1000)%60,min=Math.floor(dt/60000);vtimer.textContent=formatTime(min,sec,centi);if(running)raf=requestAnimationFrame(tick);}vstart.onclick=()=>{if(!running){running=true;t0=Date.now();raf=requestAnimationFrame(tick);}};vstop.onclick=()=>{if(!running)return;running=false;if(raf)cancelAnimationFrame(raf);};vreset.onclick=()=>{running=false;if(raf)cancelAnimationFrame(raf);vtimer.textContent='00:00.00';};btn-add-from-chrono.onclick=()=>{runs.push({Temps:vtimer.textContent});render();};
-function bestAndCount(){if(!runs.length)return{best:null,count:0};let b=runs[0],bv=parseTimeToCentis(b.Temps);for(let i=1;i<runs.length;i++){const v=parseTimeToCentis(runs[i].Temps);if(v<bv){b=runs[i];bv=v;}}return {best:b.Temps,count:runs.length};}
-btn-save.onclick=()=>{const s=loadSeance(),bc=bestAndCount();s.vitesse={runs:runs.slice(),best:bc.best,count:bc.count};saveSeance(s);alert('Vitesse enregistrée ✅');};
-btn-qr.onclick=()=>{if(!runs.length){alert('Ajoute un essai');return;}const bc=bestAndCount();let cells=[id.Nom,id.Prenom,id.Classe];runs.forEach((r,i)=>cells.push(`Essai${i+1}=${r.Temps}`));cells.push(`BestTemps=${bc.best||''}`,`NbEssais=${bc.count}`);const line=cells.join(',');makeQR('qrv',line);jsonv.textContent=line;document.getElementById('qr-section').style.display='block';};
+import {getIdentite, ensureIdentite, renderFooter, formatTime, parseTimeToCentis, loadSeance, saveSeance, makeQR, buildCSV} from './app.js';
+renderFooter(); ensureIdentite();
+const id=getIdentite(); document.getElementById('idline').innerHTML = `Élève : <strong>${id.Prenom} ${id.Nom}</strong> — <span class='badge'>Classe : ${id.Classe}</span>`;
+const runs=[], tbody=document.querySelector('#v_table tbody'), bestEl=document.getElementById('best'), nbEl=document.getElementById('nb');
+function render(){ tbody.innerHTML=''; let best=null;
+  runs.forEach((it,i)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${i+1}</td><td>${it.Temps}</td><td><button class="btn red" data-i="${i}">Supprimer</button></td>`; tbody.appendChild(tr);
+    const val=parseTimeToCentis(it.Temps); if(best===null || val<best.val){ best={val, txt:it.Temps}; } });
+  tbody.querySelectorAll('button[data-i]').forEach(btn=>btn.addEventListener('click', e=>{ runs.splice(+e.currentTarget.dataset.i,1); render(); }));
+  bestEl.textContent=best?best.txt:'—'; nbEl.textContent=runs.length;
+}
+document.getElementById('btn_add').onclick=()=>{ const Temps = formatTime(vm.value,vs.value,vc.value); runs.push({Temps}); render(); };
+document.getElementById('btn_clear').onclick=()=>{ runs.length=0; render(); };
+
+let t0=0, raf=null, running=false;
+function tick(){ const dt=Date.now()-t0, c=Math.floor(dt/10)%100, s=Math.floor(dt/1000)%60, m=Math.floor(dt/60000); vtimer.textContent=formatTime(m,s,c); if(running) raf=requestAnimationFrame(tick); }
+document.getElementById('vstart').onclick=()=>{ if(!running){ running=true; t0=Date.now(); raf=requestAnimationFrame(tick);} };
+document.getElementById('vstop').onclick=()=>{ if(!running) return; running=false; if(raf) cancelAnimationFrame(raf); };
+document.getElementById('vreset').onclick=()=>{ running=false; if(raf) cancelAnimationFrame(raf); vtimer.textContent='00:00.00'; };
+document.getElementById('btn_add_from_chrono').onclick=()=>{ runs.push({Temps: vtimer.textContent}); render(); };
+
+function bestAndCount(){ if(!runs.length) return {best:null,count:0}; let best=runs[0], bv=parseTimeToCentis(best.Temps); for(let i=1;i<runs.length;i++){ const v=parseTimeToCentis(runs[i].Temps); if(v<bv){ best=runs[i]; bv=v; } } return {best:best.Temps, count:runs.length}; }
+document.getElementById('btn_save').onclick=()=>{ const s=loadSeance(), bc=bestAndCount(); s.vitesse={runs:runs.slice(), best:bc.best, count:bc.count}; saveSeance(s); alert('Vitesse enregistrée ✅'); };
+document.getElementById('btn_qr').onclick=()=>{
+  if(!runs.length){ alert('Ajoute un essai'); return; }
+  const ascii=document.getElementById('ascii').checked, nolabel=document.getElementById('nolabel').checked;
+  const bc=bestAndCount(); let cells=[id.Nom,id.Prenom,id.Classe];
+  runs.forEach((r,i)=>cells.push(nolabel?`${r.Temps}`:`Essai${i+1}=${r.Temps}`));
+  cells.push(nolabel?`${bc.best||''}`, `${bc.count}` : `BestTemps=${bc.best||''}`, `NbEssais=${bc.count}`);
+  const line=buildCSV(cells,{ascii}); makeQR('qrv', line); jsonv.textContent=line; document.getElementById('qr-section').style.display='block';
+};
 </script></body></html>

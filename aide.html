@@ -1,11 +1,12 @@
 <!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>ClimbTrack — Aide</title><link rel="stylesheet" href="style.css"></head>
-<body><div class="main-wrap"><div class="container"><div class="headerbar"><div class="logo">❓ <span class="highlight">Aide ClimbTrack</span></div><div class="right"><a class="btn green big" href="menu.html">🏠 Menu</a><a class="btn amber big" href="securite.html">🦺 Sécurité</a></div></div>
-<div class="row row-3"><div class="card"><h2>1) S’identifier</h2><p class="lead">Nom, Prénom, Classe → accès au menu.</p><div class="actions"><a class="btn blue big" href="identite.html">📝 Identification</a></div></div>
-<div class="card"><h2>2) Choisir une pratique</h2><p class="lead">Bloc • Difficulté • Vitesse • Créateur • QR de séance</p><div class="actions"><a class="btn blue big" href="menu.html">🧭 Ouvrir le menu</a></div></div>
-<div class="card"><h2>3) QR “à plat”</h2><p class="lead">Colonnes : <strong>Nom, Prenom, Classe</strong> puis 1 colonne par info (Essai1, BestTemps, B1, D1...).</p></div></div>
-<div class="row row-3" style="margin-top:12px;">
-<div class="card"><h3>🟨 Bloc</h3><ul><li>Couleur + numéro (ex. <code>bleu-5</code>).</li><li>QR : <code>Nom,Prenom,Classe,Bloc1,Bloc2,...</code></li></ul></div>
-<div class="card"><h3>🧗 Difficulté</h3><ul><li><code>cotation|Xrelais|style|OK</code> ou <code>...|NT:degX5</code>/<code>autre_prise:n3</code>/<code>fatigue</code>/<code>peur</code>/<code>technique</code></li><li>QR : <code>Nom,Prenom,Classe,Diff1,Diff2,...</code></li></ul></div>
-<div class="card"><h3>⚡ Vitesse</h3><ul><li>Essais multiples → QR garde <strong>BestTemps</strong> + <strong>NbEssais</strong>.</li><li>QR : <code>Nom,Prenom,Classe,Essai1,Essai2,...,BestTemps,NbEssais</code></li></ul></div>
-</div></div><footer><div class="container"><div class="footer-inner"></div></div></footer>
-<script type="module">import {renderFooter} from './app.js';renderFooter();</script></body></html>
+<body><div class="main-wrap"><div class="container">
+  <div class="headerbar"><div class="logo">❓ <span class="highlight">Aide ClimbTrack</span></div>
+    <div class="right"><a class="btn green big" href="menu.html">🏠 Menu</a><a class="btn amber big" href="securite.html">🦺 Sécurité</a></div></div>
+  <div class="row row-3">
+    <div class="card"><h2>1) S’identifier</h2><p class="lead">Nom, Prénom, Classe → accès au menu.</p><div class="actions"><a class="btn blue big" href="identite.html">📝 Identification</a></div></div>
+    <div class="card"><h2>2) Choisir une pratique</h2><p class="lead">Bloc • Difficulté • Vitesse • Créateur • QR de séance</p><div class="actions"><a class="btn blue big" href="menu.html">🧭 Ouvrir le menu</a></div></div>
+    <div class="card"><h2>3) QR “à plat”</h2><p class="lead">Colonnes : <strong>Nom, Prenom, Classe</strong> puis 1 colonne par info (Essai1, BestTemps, B1, D1...).</p></div>
+  </div>
+</div><footer><div class="container"><div class="footer-inner"></div></div></footer>
+<script type="module">import {renderFooter} from './app.js'; renderFooter();</script>
+</body></html>
