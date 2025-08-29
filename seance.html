@@ -12,12 +12,12 @@
     </div>
     <div class="row row-2" style="margin-top:12px;">
       <div class="card"><h3>⚡ Vitesse</h3><div id="vzone" class="small">—</div></div>
-      <div class="card"><h3>📷 Créateur de voie</h3><div class="small">Crée ta voie → <a class="btn edit" href="route-editor.html">Ouvrir</a> (non inclus dans le QR)</div></div>
+      <div class="card"><h3>📷 Créateur de voie</h3><div class="small">Prendre une photo → <a class="btn edit" href="route-capture.html">Ouvrir</a> (non inclus dans le QR)</div></div>
     </div>
 
     <div class="center" style="margin-top:16px;">
       <button class="btn green big" id="btn_qr">📷 Un seul QR pour tout</button>
-      <p class="note">Fais scanner ce QR par ton/ta prof → tout ton travail de la séance.</p>
+      <p class="note">Ordre des champs : <strong>nom, prenom, classe, blocs..., difficultes..., vitesse</strong></p>
       <div id="qr-section" style="display:none;margin-top:12px;">
         <div class="qr-wrap"><div class="qr-box" id="qrs"></div></div>
         <pre class="pre" id="jsons"></pre>
@@ -28,20 +28,21 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script type="module">
 import {getIdentite, ensureIdentite, renderFooter, makeQR, loadSeance} from './app.js';
-renderFooter(); ensureIdentite(); const id=getIdentite(); document.getElementById('idline').innerHTML=`Élève : <strong>${id.Prenom} ${id.Nom}</strong> — <span class='badge'>Classe : ${id.Classe}</span>`;
+renderFooter(); ensureIdentite(); const id=getIdentite(); document.getElementById('idline').innerHTML=`Élève : <strong>${id.prenom} ${id.nom}</strong> — <span class='badge'>Classe : ${id.classe}</span>`;
 function render(){ const s=loadSeance();
   const vTxt=(s.vitesse&&s.vitesse.best)?`Best=${s.vitesse.best} • NbEssais=${s.vitesse.nb}`:'—';
   vzone.textContent=vTxt;
-  dzone.textContent=(s.difficulte&&s.difficulte.length)?s.difficulte.map((x,i)=>`D${i+1}:${x.cotation}|X${x.relais}|${x.style}|${x.resultat}${x.motif?':'+x.motif:''}`).join('  |  '):'—';
-  bzone.textContent=(s.bloc&&s.bloc.length)?s.bloc.map((x,i)=>`B${i+1}:${x.c}-${x.n} (${x.lvl})`).join('  |  '):'—';
+  dzone.textContent=(s.difficulte&&s.difficulte.length)?s.difficulte.map((x,i)=>`D${i+1}:${x.cotation} R${x.relais}`).join('  |  '):'—';
+  bzone.textContent=(s.bloc&&s.bloc.length)?s.bloc.map((x,i)=>`B${i+1}:${x.c} R${x.n}`).join('  |  '):'—';
 } render();
 
 document.getElementById('btn_qr').onclick=()=>{
   const s=loadSeance();
-  const obj={Nom:id.Nom, Prenom:id.Prenom, Classe:id.Classe};
-  if(s.vitesse && s.vitesse.best){ obj.Vitesse={best:s.vitesse.best, nb:s.vitesse.nb}; }
-  if(s.bloc && s.bloc.length){ obj.Bloc=s.bloc.map(b=>({couleur:b.c, numero:b.n, niveau:b.lvl})); }
-  if(s.difficulte && s.difficulte.length){ obj.Difficulte=s.difficulte; }
+  // Ordered keys: nom, prenom, classe, bloc_1..., difficulte_1..., vitesse
+  const obj={ nom:id.nom, prenom:id.prenom, classe:id.classe };
+  if(s.bloc && s.bloc.length){ s.bloc.forEach((b,idx)=>{ obj['bloc_'+(idx+1)] = `${b.c} R${b.n}`; }); }
+  if(s.difficulte && s.difficulte.length){ s.difficulte.forEach((d,idx)=>{ obj['difficulte_'+(idx+1)] = `${d.cotation} R${d.relais}`; }); }
+  if(s.vitesse && s.vitesse.best){ obj.vitesse = s.vitesse.best; }
   const txt=makeQR('qrs', obj); jsons.textContent=txt; document.getElementById('qr-section').style.display='block';
 };
 </script></body></html>

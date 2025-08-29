@@ -1,0 +1,29 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ClimbTrack — Prendre/ajouter une photo</title><link rel="stylesheet" href="style.css"></head>
+<body><div class="main-wrap"><div class="container">
+  <div class="headerbar"><div class="logo">📷 <span class="highlight">Prendre/ajouter une photo</span></div>
+    <div class="right"><a class="btn green big" href="menu.html">🏠 Menu</a></div></div>
+  <div class="card"><h2>Étape 1 — Choisir une photo du mur</h2><p class="lead">Utilise l’appareil photo ou importe une image.</p>
+    <div class="row row-2">
+      <div class="card"><h3>Caméra</h3>
+        <div class="actions"><button class="btn blue big" id="open-camera">🎥 Ouvrir caméra</button><button class="btn blue big" id="snap" disabled>📸 Prendre la photo</button></div>
+        <video id="video" autoplay playsinline style="width:100%; border-radius:12px; margin-top:8px; display:none;"></video>
+      </div>
+      <div class="card"><h3>Import</h3>
+        <input id="file" type="file" accept="image/*" capture="environment">
+        <p class="note">Formats pris : JPG/PNG/HEIC (selon le navigateur).</p>
+      </div>
+    </div>
+  </div></div>
+  <footer><div class="container"><div class="footer-inner"></div></div></footer>
+<script type="module">
+import {setRouteImage, renderFooter} from './app.js';
+renderFooter();
+const video=document.getElementById('video'), openBtn=document.getElementById('open-camera'), snapBtn=document.getElementById('snap'); let stream=null;
+async function openCamera(){ try{ stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}); video.srcObject=stream; video.style.display='block'; snapBtn.disabled=false; }catch(e){ alert('Caméra non disponible. Utilise l’import.'); } }
+function snap(){ if(!stream) return; const v=video; const c=document.createElement('canvas'); c.width=v.videoWidth; c.height=v.videoHeight; c.getContext('2d').drawImage(v,0,0); const data=c.toDataURL('image/jpeg',0.9); setRouteImage(data); if(stream){ stream.getTracks().forEach(t=>t.stop()); } location.href='route-draw.html'; }
+openBtn.onclick=openCamera; snapBtn.onclick=snap;
+document.getElementById('file').onchange=(e)=>{ const f=e.target.files[0]; if(!f) return; const reader=new FileReader(); reader.onload=()=>{ setRouteImage(reader.result); location.href='route-draw.html'; }; reader.readAsDataURL(f); };
+</script>
+</body></html>

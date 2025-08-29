@@ -11,7 +11,7 @@
         <div class="actions"><button class="btn blue big" id="btn_add">➕ Ajouter essai</button><button class="btn red big" id="btn_clear">♻️ Vider essais</button></div>
       </div>
       <div class="card"><h3>⏱️ Chrono intégré (option)</h3><p class="small">Uniquement si votre mur n’a pas de chrono.</p>
-        <div style="font-size:2.2rem;font-weight:900;margin:10px 0;" id="vtimer">00:00.00</div>
+        <div style="font-size:2.2rem;font-weight:900;margin:10px 0;" id="vtimer">00:00:00</div>
         <div class="actions"><button class="btn green big" id="vstart">Lancer</button><button class="btn amber big" id="vstop">Stop</button><button class="btn red big" id="vreset">Réinit</button><button class="btn blue big" id="btn_add_from_chrono">➕ Ajouter depuis chrono</button></div>
       </div>
     </div>
@@ -26,7 +26,7 @@
 <script type="module">
 import {getIdentite, ensureIdentite, renderFooter, formatTime, parseTimeToCentis, loadSeance, saveSeance, makeQR} from './app.js';
 renderFooter(); ensureIdentite();
-const id=getIdentite(); document.getElementById('idline').innerHTML = `Élève : <strong>${id.Prenom} ${id.Nom}</strong> — <span class='badge'>Classe : ${id.Classe}</span>`;
+const id=getIdentite(); document.getElementById('idline').innerHTML = `Élève : <strong>${id.prenom} ${id.nom}</strong> — <span class='badge'>Classe : ${id.classe}</span>`;
 const runs=[], tbody=document.querySelector('#v_table tbody'), bestEl=document.getElementById('best'), nbEl=document.getElementById('nb');
 function render(){ tbody.innerHTML=''; let best=null;
   runs.forEach((it,i)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${i+1}</td><td>${it}</td><td><button class="btn red" data-i="${i}">Supprimer</button></td>`; tbody.appendChild(tr);
@@ -41,14 +41,14 @@ let t0=0, timer=null, running=false;
 function tick(){ const dt=Date.now()-t0, c=Math.floor(dt/10)%100, s=Math.floor(dt/1000)%60, m=Math.floor(dt/60000); vtimer.textContent=formatTime(m,s,c); }
 document.getElementById('vstart').onclick=()=>{ if(!running){ running=true; t0=Date.now(); timer=setInterval(tick, 10);} };
 document.getElementById('vstop').onclick=()=>{ if(!running) return; running=false; clearInterval(timer); timer=null; };
-document.getElementById('vreset').onclick=()=>{ running=false; if(timer) clearInterval(timer); vtimer.textContent='00:00.00'; };
+document.getElementById('vreset').onclick=()=>{ running=false; if(timer) clearInterval(timer); vtimer.textContent='00:00:00'; };
 document.getElementById('btn_add_from_chrono').onclick=()=>{ runs.push(vtimer.textContent); render(); };
 
 function bestAndCount(){ if(!runs.length) return {best:null,count:0}; let best=runs[0], bv=parseTimeToCentis(best); for(let i=1;i<runs.length;i++){ const v=parseTimeToCentis(runs[i]); if(v<bv){ best=runs[i]; bv=v; } } return {best, count:runs.length}; }
 document.getElementById('btn_save').onclick=()=>{ const s=loadSeance(), bc=bestAndCount(); s.vitesse={essais:runs.slice(), best:bc.best, nb:bc.count}; saveSeance(s); alert('Vitesse enregistrée ✅'); };
 document.getElementById('btn_qr').onclick=()=>{
-  if(!runs.length){ alert('Ajoute un essai'); return; }
-  const bc=bestAndCount(); const obj={Nom:id.Nom, Prenom:id.Prenom, Classe:id.Classe, Vitesse:{essais:runs, best:bc.best, nb:bc.count}};
+  const bc=bestAndCount(); if(!bc.best){ alert('Ajoute un essai'); return; }
+  const obj={ nom:id.nom, prenom:id.prenom, classe:id.classe, vitesse:bc.best };
   const txt=makeQR('qrv', obj); jsonv.textContent=txt; document.getElementById('qr-section').style.display='block';
 };
 </script></body></html>

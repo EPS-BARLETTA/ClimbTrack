@@ -25,7 +25,7 @@
 import {getIdentite, ensureIdentite, renderFooter, loadSeance, saveSeance, makeQR} from './app.js';
 renderFooter(); ensureIdentite();
 const id = getIdentite();
-document.getElementById('idline').innerHTML = `Élève : <strong>${id.Prenom} ${id.Nom}</strong> — <span class='badge'>Classe : ${id.Classe}</span>`;
+document.getElementById('idline').innerHTML = `Élève : <strong>${id.prenom} ${id.nom}</strong> — <span class='badge'>Classe : ${id.classe}</span>`;
 
 const tbody=document.querySelector('#d_table tbody'); const list=[];
 const dres=document.getElementById('d_resultat'), motifs=document.getElementById('motifs'), motifSel=document.getElementById('d_motif');
@@ -37,7 +37,7 @@ function render(){ tbody.innerHTML=''; list.forEach((it,i)=>{ const tr=document.
   tbody.querySelectorAll('button[data-i]').forEach(btn=>btn.addEventListener('click', e=>{ list.splice(+e.currentTarget.dataset.i,1); render(); })); }
 function motifToTxt(m,degx,nbp){ if(m==='chute_degaine') return 'degX'+(degx||'?'); if(m==='autre_prise') return 'autre_prise:n'+(nbp||'?'); if(m==='fatigue') return 'fatigue'; if(m==='peur') return 'peur'; if(m==='technique') return 'technique'; return ''; }
 document.getElementById('btn_add').onclick=()=>{
-  const cot=d_cotation.value.trim(); const rel=parseInt(d_relais.value||'0',10); const sty=d_style.value; const res=d_resultat.value;
+  const cot=d_cotation.value.trim().toUpperCase(); const rel=parseInt(d_relais.value||'0',10); const sty=d_style.value; const res=d_resultat.value;
   if(!cot){ alert('Saisir une cotation'); return; }
   const it={cotation:cot, relais:rel, style:sty, resultat:(res==='reussie'?'OK':'NT'), motif:(res==='non_terminee'?motifToTxt(motifSel.value, parseInt(d_degx.value||'0',10), parseInt(d_nbprise.value||'0',10)):'')};
   list.push(it); render();
@@ -46,7 +46,8 @@ document.getElementById('btn_clear').onclick=()=>{ list.length=0; render(); };
 document.getElementById('btn_save').onclick=()=>{ const s=loadSeance(); s.difficulte=list.slice(); saveSeance(s); alert('Difficulté enregistrée ✅'); };
 document.getElementById('btn_qr').onclick=()=>{
   if(!list.length){ alert('Ajoute une réalisation'); return; }
-  const obj={Nom:id.Nom, Prenom:id.Prenom, Classe:id.Classe, Difficulte:list};
+  const obj={ nom:id.nom, prenom:id.prenom, classe:id.classe };
+  list.forEach((d,idx)=>{ obj['difficulte_'+(idx+1)] = `${d.cotation} R${d.relais}`; });
   const txt=makeQR('qrd', obj); jsond.textContent=txt; document.getElementById('qr-section').style.display='block';
 };
 </script></body></html>

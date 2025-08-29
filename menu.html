@@ -4,10 +4,10 @@
     <div class="right"><a class="btn green big" href="index.html">🏠 Accueil</a><a class="btn blue big" href="aide.html">❓ Aide</a><a class="btn amber big" href="securite.html">🦺 Sécurité</a></div></div>
   <div class="card"><h2>Choisis une pratique</h2><p class="lead" id="idline"></p>
     <div class="menu-grid" style="margin-top:12px;">
-      <div class="menu-card bloc"><div><div class="title">🟨🟩🟦🟥⚫🟪 Bloc</div><p>Enregistre <strong>tes réussites</strong>.</p></div><a class="btn bloc big" href="bloc.html">Aller au Bloc</a></div>
+      <div class="menu-card bloc"><div><div class="title">🟨🟩🟦🟥▢🟪 Bloc</div><p>Enregistre <strong>tes réussites</strong>.</p></div><a class="btn bloc big" href="bloc.html">Aller au Bloc</a></div>
       <div class="menu-card diff"><div><div class="title">🧗 Difficulté</div><p>Enregistre <strong>tes voies</strong> (cotation + relais).</p></div><a class="btn diff big" href="difficulte.html">Aller à la Difficulté</a></div>
       <div class="menu-card vit"><div><div class="title">⚡ Vitesse</div><p>Enregistre <strong>tes temps</strong>.</p></div><a class="btn vit big" href="vitesse.html">Aller à la Vitesse</a></div>
-      <div class="menu-card edit"><div><div class="title">📷🛠️ Créateur de voie</div><p>Crée <strong>ta voie</strong> à partir d'une photo.</p></div><a class="btn edit big" href="route-editor.html">Ouvrir le Créateur</a></div>
+      <div class="menu-card edit"><div><div class="title">📷🛠️ Créateur de voie</div><p>Prends une photo puis dessine dessus.</p></div><a class="btn edit big" href="route-capture.html">Prendre/ajouter une photo</a></div>
       <div class="menu-card" style="grid-column:1/-1;"><div><div class="title">📦 QR de ma séance</div><p>Un seul QR pour tout — fais le scanner par ton prof.</p></div><a class="btn green big" href="seance.html">Générer le QR séance</a></div>
     </div>
   </div></div>
@@ -15,5 +15,5 @@
 </div>
 <script type="module">import {getIdentite, ensureIdentite, renderFooter} from './app.js';
 renderFooter(); ensureIdentite();
-const id = getIdentite(); document.getElementById('idline').innerHTML = `Élève : <strong>${id.Prenom} ${id.Nom}</strong> — <span class="badge">Classe : ${id.Classe}</span>`;
+const id = getIdentite(); document.getElementById('idline').innerHTML = `Élève : <strong>${id.prenom} ${id.nom}</strong> — <span class="badge">Classe : ${id.classe}</span>`;
 </script></body></html>

@@ -17,9 +17,11 @@ import {saveIdentite, renderFooter, clearSeance} from './app.js';
 renderFooter(); clearSeance();
 document.getElementById('id-form').addEventListener('submit', (e)=>{
   e.preventDefault();
-  const Nom = nom.value.trim(), Prenom = prenom.value.trim(), Classe = classe.value.trim();
-  if(!Nom||!Prenom||!Classe) return;
-  saveIdentite({Nom,Prenom,Classe});
+  const nom = document.getElementById('nom').value.trim();
+  const prenom = document.getElementById('prenom').value.trim();
+  const classe = document.getElementById('classe').value.trim();
+  if(!nom||!prenom||!classe) return;
+  saveIdentite({nom, prenom, classe});
   location.href='menu.html';
 });
 </script></body></html>
