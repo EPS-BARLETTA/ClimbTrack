@@ -16,17 +16,13 @@
     </div>
     <div class="actions"><button class="btn blue big" id="btn_add">➕ Ajouter</button><button class="btn red big" id="btn_clear">♻️ Vider</button></div>
     <table class="table" id="d_table"><thead><tr><th>#</th><th>Cotation</th><th>Relais</th><th>Style</th><th>Résultat</th><th>Motif</th><th>Action</th></tr></thead><tbody></tbody></table>
-    <div class="actions"><button class="btn green big" id="btn_save">💾 Enregistrer séance</button><button class="btn green big" id="btn_qr">📷 QR Difficulté</button><a class="btn" href="seance.html">➡️ QR de séance</a></div>
-    <div class="card">
-      <label><input type="checkbox" id="ascii"> Compatibilité ScanProf (ASCII)</label>
-      <label><input type="checkbox" id="nolabel"> Format simple (sans étiquettes)</label>
-    </div>
-    <div id="qr-section" style="display:none;margin-top:16px;"><h3>📷 QR prêt</h3><div class="qr-wrap"><div class="qr-box" id="qrd"></div><pre class="pre" id="jsond"></pre></div></div>
+    <div class="actions"><button class="btn green big" id="btn_save">💾 Enregistrer séance</button><button class="btn green big" id="btn_qr">📷 QR Difficulté (JSON)</button><a class="btn" href="seance.html">➡️ QR de séance</a></div>
+    <div id="qr-section" style="display:none;margin-top:16px;"><h3>📷 QR prêt (JSON)</h3><div class="qr-wrap"><div class="qr-box" id="qrd"></div><pre class="pre" id="jsond"></pre></div></div>
   </div></div>
   <footer><div class="container"><div class="footer-inner"></div></div></footer>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script type="module">
-import {getIdentite, ensureIdentite, renderFooter, loadSeance, saveSeance, makeQR, buildCSV} from './app.js';
+import {getIdentite, ensureIdentite, renderFooter, loadSeance, saveSeance, makeQR} from './app.js';
 renderFooter(); ensureIdentite();
 const id = getIdentite();
 document.getElementById('idline').innerHTML = `Élève : <strong>${id.Prenom} ${id.Nom}</strong> — <span class='badge'>Classe : ${id.Classe}</span>`;
@@ -37,25 +33,20 @@ const motif_deg=document.getElementById('motif_deg'), motif_nb=document.getEleme
 function updateMotifFields(){ const m=motifSel.value; motif_deg.style.display=(m==='chute_degaine')?'block':'none'; motif_nb.style.display=(m==='autre_prise')?'block':'none'; }
 dres.addEventListener('change', ()=>{ motifs.style.display = (dres.value==='non_terminee') ? 'block' : 'none'; updateMotifFields(); });
 motifSel.addEventListener('change', updateMotifFields);
-function render(){ tbody.innerHTML=''; list.forEach((it,i)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${i+1}</td><td>${it.Cotation}</td><td>${it.Relais}</td><td>${it.Style}</td><td>${it.Resultat}</td><td>${it.MotifTxt||''}</td><td><button class="btn red" data-i="${i}">Supprimer</button></td>`; tbody.appendChild(tr); });
+function render(){ tbody.innerHTML=''; list.forEach((it,i)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${i+1}</td><td>${it.cotation}</td><td>${it.relais}</td><td>${it.style}</td><td>${it.resultat}</td><td>${it.motif||''}</td><td><button class="btn red" data-i="${i}">Supprimer</button></td>`; tbody.appendChild(tr); });
   tbody.querySelectorAll('button[data-i]').forEach(btn=>btn.addEventListener('click', e=>{ list.splice(+e.currentTarget.dataset.i,1); render(); })); }
 function motifToTxt(m,degx,nbp){ if(m==='chute_degaine') return 'degX'+(degx||'?'); if(m==='autre_prise') return 'autre_prise:n'+(nbp||'?'); if(m==='fatigue') return 'fatigue'; if(m==='peur') return 'peur'; if(m==='technique') return 'technique'; return ''; }
 document.getElementById('btn_add').onclick=()=>{
-  const Cotation=d_cotation.value.trim(); const Relais=parseInt(d_relais.value||'0',10); const Style=d_style.value; const Resultat=d_resultat.value;
-  if(!Cotation){ alert('Saisir une cotation'); return; }
-  const it={Cotation,Relais,Style,Resultat};
-  it.MotifTxt = (Resultat==='non_terminee') ? motifToTxt(motifSel.value, parseInt(d_degx.value||'0',10), parseInt(d_nbprise.value||'0',10)) : '';
+  const cot=d_cotation.value.trim(); const rel=parseInt(d_relais.value||'0',10); const sty=d_style.value; const res=d_resultat.value;
+  if(!cot){ alert('Saisir une cotation'); return; }
+  const it={cotation:cot, relais:rel, style:sty, resultat:(res==='reussie'?'OK':'NT'), motif:(res==='non_terminee'?motifToTxt(motifSel.value, parseInt(d_degx.value||'0',10), parseInt(d_nbprise.value||'0',10)):'')};
   list.push(it); render();
 };
 document.getElementById('btn_clear').onclick=()=>{ list.length=0; render(); };
-function itemToStr(it){ return `${it.Cotation}|X${it.Relais}|${it.Style}|${it.Resultat==='reussie'?'OK':'NT:'+ (it.MotifTxt||'')}`; }
 document.getElementById('btn_save').onclick=()=>{ const s=loadSeance(); s.difficulte=list.slice(); saveSeance(s); alert('Difficulté enregistrée ✅'); };
 document.getElementById('btn_qr').onclick=()=>{
   if(!list.length){ alert('Ajoute une réalisation'); return; }
-  const ascii=document.getElementById('ascii').checked, nolabel=document.getElementById('nolabel').checked;
-  let cells=[id.Nom,id.Prenom,id.Classe];
-  list.forEach((d,i)=>cells.push(nolabel?itemToStr(d):`Diff${i+1}=${itemToStr(d)}`));
-  const line = buildCSV(cells,{ascii});
-  makeQR('qrd', line); jsond.textContent=line; document.getElementById('qr-section').style.display='block';
+  const obj={Nom:id.Nom, Prenom:id.Prenom, Classe:id.Classe, Difficulte:list};
+  const txt=makeQR('qrd', obj); jsond.textContent=txt; document.getElementById('qr-section').style.display='block';
 };
 </script></body></html>

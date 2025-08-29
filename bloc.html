@@ -5,43 +5,44 @@
   <div class="headerbar"><div class="logo">🧱 <span class="highlight">Bloc</span></div>
     <div class="right"><a class="btn green big" href="menu.html">🏠 Menu</a><a class="btn blue big" href="aide.html">❓ Aide</a></div></div>
   <div class="card"><h2>Blocs réussis</h2><p class="lead" id="idline"></p>
-    <label>Couleur<select id="b_couleur"><option value="jaune">🟨 Jaune</option><option value="vert">🟩 Vert</option><option value="bleu">🟦 Bleu</option><option value="rouge">🟥 Rouge</option></select></label>
+    <label>Couleur<select id="b_couleur">
+      <option value="jaune">🟨 Jaune — facile</option>
+      <option value="vert">🟩 Vert — peu difficile</option>
+      <option value="bleu">🟦 Bleu — assez difficile</option>
+      <option value="rouge">🟥 Rouge — difficile</option>
+      <option value="noir">⚫ Noir — très difficile</option>
+      <option value="mauve">🟪 Mauve — abominable</option>
+    </select></label>
     <label>Numéro<input id="b_num" type="number" min="1" max="200" placeholder="Ex. 5"></label>
     <div class="actions"><button class="btn blue big" id="b_add">➕ Ajouter</button><button class="btn red big" id="b_clear">♻️ Vider</button></div>
-    <table class="table" id="b_table"><thead><tr><th>#</th><th>Couleur</th><th>Numéro</th><th>Action</th></tr></thead><tbody></tbody></table>
+    <table class="table" id="b_table"><thead><tr><th>#</th><th>Couleur</th><th>Niveau</th><th>Numéro</th><th>Action</th></tr></thead><tbody></tbody></table>
     <div class="actions">
       <button class="btn green big" id="b_save">💾 Enregistrer séance</button>
-      <button class="btn green big" id="b_qr">📷 QR Bloc</button>
+      <button class="btn green big" id="b_qr">📷 QR Bloc (JSON)</button>
       <a class="btn" href="seance.html">➡️ QR de séance</a>
     </div>
-    <div class="card">
-      <label><input type="checkbox" id="ascii"> Compatibilité ScanProf (ASCII)</label>
-      <label><input type="checkbox" id="nolabel"> Format simple (sans étiquettes)</label>
-    </div>
     <div id="qr-section" style="display:none;margin-top:16px;">
-      <h3>📷 QR prêt</h3>
+      <h3>📷 QR prêt (JSON)</h3>
       <div class="qr-wrap"><div class="qr-box" id="qrb"></div><pre class="pre" id="jsonb"></pre></div>
     </div>
   </div></div>
   <footer><div class="container"><div class="footer-inner"></div></div></footer>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script type="module">
-import {getIdentite, ensureIdentite, renderFooter, loadSeance, saveSeance, makeQR, buildCSV} from './app.js';
+import {getIdentite, ensureIdentite, renderFooter, loadSeance, saveSeance, makeQR} from './app.js';
 renderFooter(); ensureIdentite();
 const id = getIdentite();
 document.getElementById('idline').innerHTML = `Élève : <strong>${id.Prenom} ${id.Nom}</strong> — <span class='badge'>Classe : ${id.Classe}</span>`;
+const levelMap={jaune:'facile', vert:'peu_difficile', bleu:'assez_difficile', rouge:'difficile', noir:'tres_difficile', mauve:'abominable'};
 const list=[], tbody=document.querySelector('#b_table tbody');
-function render(){ tbody.innerHTML=''; list.forEach((it,i)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${i+1}</td><td><span class="color-dot dot-${it.Couleur}"></span>${it.Couleur}</td><td>${it.Numero}</td><td><button class="btn red" data-i="${i}">Supprimer</button></td>`; tbody.appendChild(tr); });
+function render(){ tbody.innerHTML=''; list.forEach((it,i)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${i+1}</td><td><span class="color-dot dot-${it.c}"></span>${it.c}</td><td>${levelMap[it.c]}</td><td>${it.n}</td><td><button class="btn red" data-i="${i}">Supprimer</button></td>`; tbody.appendChild(tr); });
   tbody.querySelectorAll('button[data-i]').forEach(btn=>btn.addEventListener('click', e=>{ list.splice(+e.currentTarget.dataset.i,1); render(); })); }
-document.getElementById('b_add').onclick=()=>{ const c=b_couleur.value; const n=parseInt(b_num.value||'0',10); if(!n){alert('Numéro ?');return;} list.push({Couleur:c, Numero:n}); render(); };
+document.getElementById('b_add').onclick=()=>{ const c=b_couleur.value; const n=parseInt(b_num.value||'0',10); if(!n){alert('Numéro ?');return;} list.push({c, n, lvl:levelMap[c]}); render(); };
 document.getElementById('b_clear').onclick=()=>{ list.length=0; render(); };
 document.getElementById('b_save').onclick=()=>{ const s=loadSeance(); s.bloc=list.slice(); saveSeance(s); alert('Blocs enregistrés ✅'); };
 document.getElementById('b_qr').onclick=()=>{
   if(!list.length){ alert('Ajoute un bloc'); return; }
-  const ascii=document.getElementById('ascii').checked, nolabel=document.getElementById('nolabel').checked;
-  let cells=[id.Nom,id.Prenom,id.Classe];
-  list.forEach((b,i)=>cells.push(nolabel?`${b.Couleur}-${b.Numero}`:`Bloc${i+1}=${b.Couleur}-${b.Numero}`));
-  const line = buildCSV(cells,{ascii});
-  makeQR('qrb', line); jsonb.textContent=line; document.getElementById('qr-section').style.display='block';
+  const obj={Nom:id.Nom, Prenom:id.Prenom, Classe:id.Classe, Bloc:list.map(b=>({couleur:b.c, numero:b.n, niveau:b.lvl}))};
+  const txt=makeQR('qrb', obj); jsonb.textContent=txt; document.getElementById('qr-section').style.display='block';
 };
 </script></body></html>

@@ -5,8 +5,8 @@
   <div class="headerbar"><div class="logo">📷🛠️ <span class="highlight">Créateur de voie</span></div>
     <div class="right"><a class="btn green big" href="menu.html">🏠 Menu</a><button class="btn blue big" id="toggle-fs">🖥️ Plein écran</button></div></div>
   <div class="card" id="editor-card">
-    <h2>Photo → Dessin au doigt → Cercles déplaçables</h2><p class="lead" id="idline"></p>
-    <div class="row row-2">
+    <h2>Photo plein écran → Dessin au doigt</h2><p class="lead" id="idline"></p>
+    <div class="row row-2" id="capture-row">
       <div class="card"><h3>Capture</h3>
         <div class="actions"><button class="btn blue big" id="open-camera">🎥 Ouvrir caméra</button><button class="btn blue big" id="snap" disabled>📸 Prendre la photo</button>
           <input id="file" type="file" accept="image/*" capture="environment" style="display:none;"><button class="btn" id="file-btn">Importer une photo</button></div>
@@ -21,10 +21,12 @@
           <button class="btn amber" id="rotate">↩️ Rotation 90°</button>
           <button class="btn red" id="undo">↩️ Annuler</button><button class="btn red" id="clear">🧹 Effacer</button>
         </div>
-        <canvas id="canvas" style="width:100%; max-height:70vh; background:#0b1224; border-radius:12px; touch-action:none;"></canvas>
+        <div id="viewer" style="position:relative;">
+          <canvas id="canvas" style="width:100%; max-height:70vh; background:#0b1224; border-radius:12px; touch-action:none;"></canvas>
+        </div>
       </div>
     </div>
-    <div class="row row-2">
+    <div class="row row-2" id="meta-row">
       <div class="card"><h3>Métadonnées</h3>
         <label>Titre<input id="title" placeholder="Ex. Créa 6a bleu"></label>
         <label>Cotation<input id="grade" placeholder="Ex. 6a"></label>
@@ -46,77 +48,66 @@ document.getElementById('idline').innerHTML = `Élève : <strong>${id.Prenom} ${
 
 const video = document.getElementById('video'); const openBtn=document.getElementById('open-camera'); const snapBtn=document.getElementById('snap');
 const fileInput=document.getElementById('file'); const fileBtn=document.getElementById('file-btn'); const canvas=document.getElementById('canvas');
-const ctx=canvas.getContext('2d'); const editorCard=document.getElementById('editor-card'); const toggleFS=document.getElementById('toggle-fs');
+const ctx=canvas.getContext('2d'); const viewer=document.getElementById('viewer');
 let stream=null, baseImg=null, scale=1, offsetX=0, offsetY=0; let points=[], strokes=[], history=[];
 
-function isFullscreen(){ return document.fullscreenElement || document.webkitFullscreenElement; }
-function goFS(){ const t=editorCard; if(t.requestFullscreen) t.requestFullscreen(); else if(t.webkitRequestFullscreen) t.webkitRequestFullscreen(); editorCard.classList.add('fullscreen'); fitToScreen(); }
-function exitFS(){ if(document.exitFullscreen) document.exitFullscreen(); else if(document.webkitExitFullscreen) document.webkitExitFullscreen(); editorCard.classList.remove('fullscreen'); fitToScreen(); }
-toggleFS.onclick = ()=>{ isFullscreen()?exitFS():goFS(); };
-document.addEventListener('fullscreenchange', ()=>{ if(!isFullscreen()) editorCard.classList.remove('fullscreen'); fitToScreen(); });
-
+function enterViewerFull(){ viewer.classList.add('viewer-full'); window.scrollTo({top:0, behavior:'smooth'}); fitToScreen(); }
 function fitCanvas(pxW, pxH){ const dpr=window.devicePixelRatio||1; canvas.width=Math.round(pxW*dpr); canvas.height=Math.round(pxH*dpr); canvas.style.width=pxW+'px'; canvas.style.height=pxH+'px'; ctx.setTransform(dpr,0,0,dpr,0,0); }
-function fitToScreen(){ if(!baseImg){ fitCanvas(canvas.parentElement.clientWidth-2, Math.min(720,Math.max(360,Math.round(window.innerHeight*0.6)))); draw(); return; }
-  const maxW=canvas.parentElement.clientWidth-2; scale=(maxW/baseImg.width); offsetX=0; offsetY=0; const ratio=baseImg.width/baseImg.height;
-  const targetH = editorCard.classList.contains('fullscreen') ? (window.innerHeight-92) : Math.min(800, Math.round(maxW/ratio));
-  fitCanvas(maxW, targetH); draw(); }
+function fitToScreen(){ const box = viewer.classList.contains('viewer-full') ? {w:window.innerWidth-20, h:window.innerHeight-120} : {w:viewer.clientWidth-2, h:Math.min(720,Math.max(360,Math.round(window.innerHeight*0.6)))};
+  fitCanvas(box.w, box.h); draw(); }
 window.addEventListener('resize', fitToScreen);
 
-function pushHistory(){ history.push(JSON.stringify({points,strokes,scale,offsetX,offsetY,src:baseImg.src})); if(history.length>100) history.shift(); }
-function undo(){ if(history.length){ const s=JSON.parse(history.pop()); points=s.points; strokes=s.strokes; scale=s.scale; offsetX=s.offsetX; offsetY=s.offsetY; const img=new Image(); img.onload=()=>{ baseImg=img; draw(); }; img.src=s.src; } }
-
-function draw(){ if(!baseImg){ ctx.clearRect(0,0,canvas.width,canvas.height); return; }
-  const w=baseImg.width*scale, h=baseImg.height*scale; ctx.clearRect(0,0,canvas.width,canvas.height); ctx.save(); ctx.translate(offsetX,offsetY); ctx.drawImage(baseImg,0,0,w,h);
-  points.forEach(p=>{ ctx.beginPath(); ctx.arc(p.x*scale, p.y*scale, p.r, 0, Math.PI*2); ctx.fillStyle = p.state==='removed' ? 'rgba(239,68,68,0.35)' : p.color; ctx.globalAlpha=p.state==='removed'?0.5:0.9; ctx.fill(); ctx.globalAlpha=1; ctx.lineWidth=2; ctx.strokeStyle='#111'; ctx.stroke(); });
+function draw(){ ctx.clearRect(0,0,canvas.width,canvas.height); if(!baseImg) return;
+  const imgRatio=baseImg.width/baseImg.height, canRatio=canvas.width/canvas.height;
+  let w=canvas.width, h=w/imgRatio; if(h>canvas.height){ h=canvas.height; w=h*imgRatio; }
+  const cx=(canvas.width-w)/2+offsetX, cy=(canvas.height-h)/2+offsetY;
+  ctx.save(); ctx.drawImage(baseImg, cx, cy, w, h);
+  points.forEach(p=>{ ctx.beginPath(); ctx.arc(cx+p.x*scale, cy+p.y*scale, p.r, 0, Math.PI*2); ctx.fillStyle = p.state==='removed' ? 'rgba(239,68,68,0.35)' : p.color; ctx.globalAlpha=p.state==='removed'?0.5:0.9; ctx.fill(); ctx.globalAlpha=1; ctx.lineWidth=2; ctx.strokeStyle='#111'; ctx.stroke(); });
   ctx.lineJoin='round'; ctx.lineCap='round';
-  strokes.forEach(s=>{ ctx.beginPath(); s.pts.forEach((pt,i)=>{ const xx=pt.x*scale, yy=pt.y*scale; if(i===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy); }); ctx.lineWidth=s.w; ctx.strokeStyle=s.color; ctx.globalAlpha=0.9; ctx.stroke(); ctx.globalAlpha=1; });
-  ctx.restore(); }
-
-function setImage(img){ baseImg=img; fitToScreen(); }
+  strokes.forEach(s=>{ ctx.beginPath(); s.pts.forEach((pt,i)=>{ const xx=cx+pt.x*scale, yy=cy+pt.y*scale; if(i===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy); }); ctx.lineWidth=s.w; ctx.strokeStyle=s.color; ctx.globalAlpha=0.9; ctx.stroke(); ctx.globalAlpha=1; });
+  ctx.restore();
+}
+function setImageFromCanvas(cnv){ const img=new Image(); img.onload=()=>{ baseImg=img; scale=img.width/600; offsetX=0; offsetY=0; points=[]; strokes=[]; enterViewerFull(); fitToScreen(); }; img.src=cnv.toDataURL('image/png'); }
+function setImageFromFile(file){ const img=new Image(); img.onload=()=>{ baseImg=img; scale=img.width/600; offsetX=0; offsetY=0; points=[]; strokes=[]; enterViewerFull(); fitToScreen(); }; img.src=URL.createObjectURL(file); }
 
 async function openCamera(){ try{ stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}); video.srcObject=stream; video.style.display='block'; snapBtn.disabled=false; }catch(e){ alert('Caméra non disponible. Utilise “Importer une photo”.'); } }
-function snap(){ if(!stream) return; const v=video; const temp=document.createElement('canvas'); temp.width=v.videoWidth; temp.height=v.videoHeight; temp.getContext('2d').drawImage(v,0,0); const img=new Image(); img.onload=()=>setImage(img); img.src=temp.toDataURL('image/png'); stream.getTracks().forEach(t=>t.stop()); stream=null; video.style.display='none'; snapBtn.disabled=true; }
-openBtn.onclick=openCamera; snapBtn.onclick=snap; fileBtn.onclick=()=>fileInput.click(); fileInput.onchange=(e)=>{ const f=e.target.files[0]; if(!f) return; const img=new Image(); img.onload=()=>setImage(img); img.src=URL.createObjectURL(f); };
+function snap(){ if(!stream) return; const v=video; const temp=document.createElement('canvas'); temp.width=v.videoWidth; temp.height=v.videoHeight; temp.getContext('2d').drawImage(v,0,0); setImageFromCanvas(temp); stream.getTracks().forEach(t=>t.stop()); stream=null; video.style.display='none'; snapBtn.disabled=true; }
+
+openBtn.onclick=openCamera; snapBtn.onclick=snap; fileBtn.onclick=()=>fileInput.click(); fileInput.onchange=(e)=>{ const f=e.target.files[0]; if(!f) return; setImageFromFile(f); };
 
 const toolSel=document.getElementById('tool'), radius=document.getElementById('radius'), colorSel=document.getElementById('color');
 document.getElementById('zoom-in').onclick=()=>{ scale*=1.15; draw(); }; document.getElementById('zoom-out').onclick=()=>{ scale/=1.15; draw(); };
-document.getElementById('fit').onclick=fitToScreen; document.getElementById('undo').onclick=undo; document.getElementById('clear').onclick=()=>{ if(confirm('Tout effacer ?')){ pushHistory(); points=[]; strokes=[]; draw(); } };
-
-function rotate90(){ if(!baseImg) return; pushHistory(); const off=document.createElement('canvas'); off.width=baseImg.height; off.height=baseImg.width; const c=off.getContext('2d'); c.translate(off.width/2, off.height/2); c.rotate(Math.PI/2); c.drawImage(baseImg, -baseImg.width/2, -baseImg.height/2); const img=new Image(); img.onload=()=>{ baseImg=img; fitToScreen(); }; img.src=off.toDataURL('image/png'); }
-document.getElementById('rotate').onclick=rotate90;
+document.getElementById('fit').onclick=fitToScreen; document.getElementById('undo').onclick=()=>{ if(history.length){ const s=JSON.parse(history.pop()); points=s.points; strokes=s.strokes; scale=s.scale; offsetX=s.offsetX; offsetY=s.offsetY; const img=new Image(); img.onload=()=>{ baseImg=img; draw(); }; img.src=s.src; } };
+document.getElementById('clear').onclick=()=>{ if(confirm('Tout effacer ?')){ points=[]; strokes=[]; draw(); } };
+document.getElementById('rotate').onclick=()=>{ if(!baseImg) return; const off=document.createElement('canvas'); off.width=baseImg.height; off.height=baseImg.width; const c=off.getContext('2d'); c.translate(off.width/2, off.height/2); c.rotate(Math.PI/2); c.drawImage(baseImg, -baseImg.width/2, -baseImg.height/2); setImageFromCanvas(off); };
 
 function canvasPos(evt){ const rect=canvas.getBoundingClientRect(); const clientX=(evt.touches?evt.touches[0].clientX:evt.clientX); const clientY=(evt.touches?evt.touches[0].clientY:evt.clientY);
-  const x=clientX-rect.left, y=clientY-rect.top; return { x:(x-offsetX)/scale, y:(y-offsetY)/scale }; }
-function findAt(x,y){ let best=-1, dmin=1e9; points.forEach((p,i)=>{ const d=Math.hypot(x-p.x,y-p.y); if(d<=p.r*1.3 && d<dmin){ best=i; dmin=d; } }); return best; }
+  const x=clientX-rect.left, y=clientY-rect.top; return { x, y }; }
+function findAt(x,y){ let best=-1, dmin=1e9; points.forEach((p,i)=>{ const d=Math.hypot(x-(canvas.width/2 + p.x*scale), y-(canvas.height/2 + p.y*scale)); if(d<=p.r*1.2 && d<dmin){ best=i; dmin=d; } }); return best; }
 
-let dragging=null, panning=false, drawing=false, currentStroke=null, lastPan={x:0,y:0}; let pinch=null;
+let dragging=null, panning=false, drawing=false, currentStroke=null, lastPan={x:0,y:0};
 canvas.addEventListener('mousedown', start, {passive:false}); canvas.addEventListener('touchstart', start, {passive:false});
 canvas.addEventListener('mousemove', move, {passive:false});  canvas.addEventListener('touchmove', move, {passive:false});
 window.addEventListener('mouseup', end); window.addEventListener('touchend', end);
 
 function start(e){ e.preventDefault(); if(!baseImg) return;
-  if(e.touches && e.touches.length===2){ const dx=e.touches[0].clientX-e.touches[1].clientX, dy=e.touches[0].clientY-e.touches[1].clientY; pinch={d0:Math.hypot(dx,dy), scale0:scale, ox:offsetX, oy:offsetY}; return; }
   const tool=toolSel.value; const {x,y}=canvasPos(e);
   if(tool==='deplacer'){ const idx=findAt(x,y); if(idx>=0){ dragging=idx; return; } }
-  if(tool==='supprimer'){ const idx=findAt(x,y); if(idx>=0){ pushHistory(); points.splice(idx,1); draw(); } return; }
+  if(tool==='supprimer'){ const idx=findAt(x,y); if(idx>=0){ points.splice(idx,1); draw(); } return; }
   if(tool==='pan'){ panning=true; lastPan={x:(e.touches?e.touches[0].clientX:e.clientX), y:(e.touches?e.touches[0].clientY:e.clientY)}; return; }
-  if(tool==='entourer'){ pushHistory(); drawing=true; currentStroke={color:colorSel.value, w:+radius.value, pts:[{x,y}]}; strokes.push(currentStroke); draw(); return; }
-  if(tool==='ajouter'){ pushHistory(); points.push({x,y,r:+radius.value,color:colorSel.value,state:'added'}); draw(); return; }
-  if(tool==='retirer'){ pushHistory(); points.push({x,y,r:+radius.value,color:'#ef4444',state:'removed'}); draw(); return; }
+  if(tool==='entourer'){ drawing=true; currentStroke={color:colorSel.value, w:+radius.value, pts:[{x:(x-canvas.width/2)/scale,y:(y-canvas.height/2)/scale}]}; strokes.push(currentStroke); draw(); return; }
+  if(tool==='ajouter'){ points.push({x:(x-canvas.width/2)/scale, y:(y-canvas.height/2)/scale, r:+radius.value,color:colorSel.value,state:'added'}); draw(); return; }
+  if(tool==='retirer'){ points.push({x:(x-canvas.width/2)/scale, y:(y-canvas.height/2)/scale, r:+radius.value,color:'#ef4444',state:'removed'}); draw(); return; }
 }
 function move(e){ if(!baseImg) return;
-  if(pinch && e.touches && e.touches.length===2){ const dx=e.touches[0].clientX-e.touches[1].clientX, dy=e.touches[0].clientY-e.touches[1].clientY; const d=Math.hypot(dx,dy);
-    const factor=d/pinch.d0; const old=scale; scale=pinch.scale0*factor; const k=scale/old;
-    const width=canvas.width/(window.devicePixelRatio||1), height=canvas.height/(window.devicePixelRatio||1);
-    offsetX = width/2 + (offsetX - width/2)*k; offsetY = height/2 + (offsetY - height/2)*k; draw(); return; }
-  if(dragging!==null){ const pos=canvasPos(e); points[dragging].x=pos.x; points[dragging].y=pos.y; draw(); return; }
+  if(dragging!==null){ const pos=canvasPos(e); points[dragging].x=(pos.x-canvas.width/2)/scale; points[dragging].y=(pos.y-canvas.height/2)/scale; draw(); return; }
   if(panning){ const cx=(e.touches?e.touches[0].clientX:e.clientX), cy=(e.touches?e.touches[0].clientY:e.clientY); offsetX += cx-lastPan.x; offsetY += cy-lastPan.y; lastPan={x:cx,y:cy}; draw(); return; }
-  if(drawing){ const pos=canvasPos(e); currentStroke.pts.push({x:pos.x,y:pos.y}); draw(); return; }
+  if(drawing){ const pos=canvasPos(e); currentStroke.pts.push({x:(pos.x-canvas.width/2)/scale, y:(pos.y-canvas.height/2)/scale}); draw(); return; }
 }
-function end(){ dragging=null; panning=false; drawing=false; currentStroke=null; pinch=null; }
+function end(){ dragging=null; panning=false; drawing=false; currentStroke=null; }
 
 document.getElementById('export-png').onclick=()=>{ if(!baseImg){ alert('Ajoute une photo'); return; } const a=document.createElement('a'); a.download=(document.getElementById('title').value||'climbtrack_voie')+'.png'; a.href=canvas.toDataURL('image/png'); a.click(); };
-document.getElementById('export-json').onclick=()=>{ if(!baseImg){ alert('Ajoute une photo'); return; } const data={App:'ClimbTrack',Type:'route',Meta:{Title:title.value||null,Cotation:grade.value||null,Style:style.value,TargetRelais:+targetX.value||null,ImgSize:baseImg?{w:baseImg.width,h:baseImg.height}:null,Scale:scale,Offset:{x:offsetX,y:offsetY}},Points:points,Paths:strokes};
+document.getElementById('export-json').onclick=()=>{ if(!baseImg){ alert('Ajoute une photo'); return; } const data={App:'ClimbTrack',Type:'route',Meta:{Title:title.value||null,Cotation:grade.value||null,Style:style.value,TargetRelais:+targetX.value||null,Canvas:{w:canvas.width,h:canvas.height},Scale:scale,Offset:{x:offsetX,y:offsetY}},Points:points,Paths:strokes};
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.download=(title.value||'climbtrack_voie')+'.json'; a.href=URL.createObjectURL(blob); a.click(); };
 </script>
 </body></html>

@@ -7,7 +7,7 @@
   <div class="card"><h2>Essais & meilleur temps</h2><p class="lead" id="idline"></p>
     <div class="row row-2">
       <div class="card"><h3>⏱️ Saisie manuelle</h3>
-        <div class="row row-3"><label>Minutes<input id="vm" type="number" min="0" max="59" placeholder="00"></label><label>Secondes<input id="vs" type="number" min="0" max="59" placeholder="00"></label><label>Centièmes<input id="vc" type="number" min="0" max="99" placeholder="00"></label></div>
+        <div class="row row-3"><label>Minutes<input id="vm" type="number" min="0" max="59" value="0"></label><label>Secondes<input id="vs" type="number" min="0" max="59" value="0"></label><label>Centièmes<input id="vc" type="number" min="0" max="99" value="0"></label></div>
         <div class="actions"><button class="btn blue big" id="btn_add">➕ Ajouter essai</button><button class="btn red big" id="btn_clear">♻️ Vider essais</button></div>
       </div>
       <div class="card"><h3>⏱️ Chrono intégré (option)</h3><p class="small">Uniquement si votre mur n’a pas de chrono.</p>
@@ -17,45 +17,38 @@
     </div>
     <div class="card"><h3>Mes essais</h3><table class="table" id="v_table"><thead><tr><th>#</th><th>Temps</th><th>Action</th></tr></thead><tbody></tbody></table>
       <p class="lead">Meilleur temps : <strong id="best"></strong> • Nb essais : <strong id="nb"></strong></p>
-      <div class="actions"><button class="btn green big" id="btn_save">💾 Enregistrer séance</button><button class="btn green big" id="btn_qr">📷 QR Vitesse</button><a class="btn" href="seance.html">➡️ QR de séance</a></div>
-      <div class="card">
-        <label><input type="checkbox" id="ascii"> Compatibilité ScanProf (ASCII)</label>
-        <label><input type="checkbox" id="nolabel"> Format simple (sans étiquettes)</label>
-      </div>
-      <div id="qr-section" style="display:none;margin-top:16px;"><h3>📷 QR prêt</h3><div class="qr-wrap"><div class="qr-box" id="qrv"></div><pre class="pre" id="jsonv"></pre></div></div>
+      <div class="actions"><button class="btn green big" id="btn_save">💾 Enregistrer séance</button><button class="btn green big" id="btn_qr">📷 QR Vitesse (JSON)</button><a class="btn" href="seance.html">➡️ QR de séance</a></div>
+      <div id="qr-section" style="display:none;margin-top:16px;"><h3>📷 QR prêt (JSON)</h3><div class="qr-wrap"><div class="qr-box" id="qrv"></div><pre class="pre" id="jsonv"></pre></div></div>
     </div>
   </div></div>
   <footer><div class="container"><div class="footer-inner"></div></div></footer>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script type="module">
-import {getIdentite, ensureIdentite, renderFooter, formatTime, parseTimeToCentis, loadSeance, saveSeance, makeQR, buildCSV} from './app.js';
+import {getIdentite, ensureIdentite, renderFooter, formatTime, parseTimeToCentis, loadSeance, saveSeance, makeQR} from './app.js';
 renderFooter(); ensureIdentite();
 const id=getIdentite(); document.getElementById('idline').innerHTML = `Élève : <strong>${id.Prenom} ${id.Nom}</strong> — <span class='badge'>Classe : ${id.Classe}</span>`;
 const runs=[], tbody=document.querySelector('#v_table tbody'), bestEl=document.getElementById('best'), nbEl=document.getElementById('nb');
 function render(){ tbody.innerHTML=''; let best=null;
-  runs.forEach((it,i)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${i+1}</td><td>${it.Temps}</td><td><button class="btn red" data-i="${i}">Supprimer</button></td>`; tbody.appendChild(tr);
-    const val=parseTimeToCentis(it.Temps); if(best===null || val<best.val){ best={val, txt:it.Temps}; } });
+  runs.forEach((it,i)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${i+1}</td><td>${it}</td><td><button class="btn red" data-i="${i}">Supprimer</button></td>`; tbody.appendChild(tr);
+    const val=parseTimeToCentis(it); if(best===null || val<best.val){ best={val, txt:it}; } });
   tbody.querySelectorAll('button[data-i]').forEach(btn=>btn.addEventListener('click', e=>{ runs.splice(+e.currentTarget.dataset.i,1); render(); }));
   bestEl.textContent=best?best.txt:'—'; nbEl.textContent=runs.length;
 }
-document.getElementById('btn_add').onclick=()=>{ const Temps = formatTime(vm.value,vs.value,vc.value); runs.push({Temps}); render(); };
+document.getElementById('btn_add').onclick=()=>{ const Temps = formatTime(vm.value,vs.value,vc.value); runs.push(Temps); render(); };
 document.getElementById('btn_clear').onclick=()=>{ runs.length=0; render(); };
 
-let t0=0, raf=null, running=false;
-function tick(){ const dt=Date.now()-t0, c=Math.floor(dt/10)%100, s=Math.floor(dt/1000)%60, m=Math.floor(dt/60000); vtimer.textContent=formatTime(m,s,c); if(running) raf=requestAnimationFrame(tick); }
-document.getElementById('vstart').onclick=()=>{ if(!running){ running=true; t0=Date.now(); raf=requestAnimationFrame(tick);} };
-document.getElementById('vstop').onclick=()=>{ if(!running) return; running=false; if(raf) cancelAnimationFrame(raf); };
-document.getElementById('vreset').onclick=()=>{ running=false; if(raf) cancelAnimationFrame(raf); vtimer.textContent='00:00.00'; };
-document.getElementById('btn_add_from_chrono').onclick=()=>{ runs.push({Temps: vtimer.textContent}); render(); };
+let t0=0, timer=null, running=false;
+function tick(){ const dt=Date.now()-t0, c=Math.floor(dt/10)%100, s=Math.floor(dt/1000)%60, m=Math.floor(dt/60000); vtimer.textContent=formatTime(m,s,c); }
+document.getElementById('vstart').onclick=()=>{ if(!running){ running=true; t0=Date.now(); timer=setInterval(tick, 10);} };
+document.getElementById('vstop').onclick=()=>{ if(!running) return; running=false; clearInterval(timer); timer=null; };
+document.getElementById('vreset').onclick=()=>{ running=false; if(timer) clearInterval(timer); vtimer.textContent='00:00.00'; };
+document.getElementById('btn_add_from_chrono').onclick=()=>{ runs.push(vtimer.textContent); render(); };
 
-function bestAndCount(){ if(!runs.length) return {best:null,count:0}; let best=runs[0], bv=parseTimeToCentis(best.Temps); for(let i=1;i<runs.length;i++){ const v=parseTimeToCentis(runs[i].Temps); if(v<bv){ best=runs[i]; bv=v; } } return {best:best.Temps, count:runs.length}; }
-document.getElementById('btn_save').onclick=()=>{ const s=loadSeance(), bc=bestAndCount(); s.vitesse={runs:runs.slice(), best:bc.best, count:bc.count}; saveSeance(s); alert('Vitesse enregistrée ✅'); };
+function bestAndCount(){ if(!runs.length) return {best:null,count:0}; let best=runs[0], bv=parseTimeToCentis(best); for(let i=1;i<runs.length;i++){ const v=parseTimeToCentis(runs[i]); if(v<bv){ best=runs[i]; bv=v; } } return {best, count:runs.length}; }
+document.getElementById('btn_save').onclick=()=>{ const s=loadSeance(), bc=bestAndCount(); s.vitesse={essais:runs.slice(), best:bc.best, nb:bc.count}; saveSeance(s); alert('Vitesse enregistrée ✅'); };
 document.getElementById('btn_qr').onclick=()=>{
   if(!runs.length){ alert('Ajoute un essai'); return; }
-  const ascii=document.getElementById('ascii').checked, nolabel=document.getElementById('nolabel').checked;
-  const bc=bestAndCount(); let cells=[id.Nom,id.Prenom,id.Classe];
-  runs.forEach((r,i)=>cells.push(nolabel?`${r.Temps}`:`Essai${i+1}=${r.Temps}`));
-  cells.push(nolabel?`${bc.best||''}`, `${bc.count}` : `BestTemps=${bc.best||''}`, `NbEssais=${bc.count}`);
-  const line=buildCSV(cells,{ascii}); makeQR('qrv', line); jsonv.textContent=line; document.getElementById('qr-section').style.display='block';
+  const bc=bestAndCount(); const obj={Nom:id.Nom, Prenom:id.Prenom, Classe:id.Classe, Vitesse:{essais:runs, best:bc.best, nb:bc.count}};
+  const txt=makeQR('qrv', obj); jsonv.textContent=txt; document.getElementById('qr-section').style.display='block';
 };
 </script></body></html>

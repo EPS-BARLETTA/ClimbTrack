@@ -18,12 +18,8 @@
     <div class="center" style="margin-top:16px;">
       <button class="btn green big" id="btn_qr">📷 Un seul QR pour tout</button>
       <p class="note">Fais scanner ce QR par ton/ta prof → tout ton travail de la séance.</p>
-      <div class="card center" style="display:inline-block">
-        <label><input type="checkbox" id="ascii"> Compatibilité ScanProf (ASCII)</label>
-        <label><input type="checkbox" id="nolabel"> Format simple (sans étiquettes)</label>
-      </div>
       <div id="qr-section" style="display:none;margin-top:12px;">
-        <div class="qr-wrap" style="justify-content:center;"><div class="qr-box" id="qrs"></div></div>
+        <div class="qr-wrap"><div class="qr-box" id="qrs"></div></div>
         <pre class="pre" id="jsons"></pre>
       </div>
     </div>
@@ -31,22 +27,21 @@
   <footer><div class="container"><div class="footer-inner"></div></div></footer>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script type="module">
-import {getIdentite, ensureIdentite, renderFooter, makeQR, loadSeance, clearSeance, buildCSV} from './app.js';
+import {getIdentite, ensureIdentite, renderFooter, makeQR, loadSeance} from './app.js';
 renderFooter(); ensureIdentite(); const id=getIdentite(); document.getElementById('idline').innerHTML=`Élève : <strong>${id.Prenom} ${id.Nom}</strong> — <span class='badge'>Classe : ${id.Classe}</span>`;
 function render(){ const s=loadSeance();
-  const vTxt=(s.vitesse&&s.vitesse.best)?`BestTemps=${s.vitesse.best} • NbEssais=${s.vitesse.count}`:'—';
+  const vTxt=(s.vitesse&&s.vitesse.best)?`Best=${s.vitesse.best} • NbEssais=${s.vitesse.nb}`:'—';
   vzone.textContent=vTxt;
-  dzone.textContent=(s.difficulte&&s.difficulte.length)?s.difficulte.map((x,i)=>`D${i+1}:${x.Cotation}|X${x.Relais}|${x.Style}|${x.Resultat==='reussie'?'OK':'NT:'+ (x.MotifTxt||'')}`).join('  |  '):'—';
-  bzone.textContent=(s.bloc&&s.bloc.length)?s.bloc.map((x,i)=>`B${i+1}:${x.Couleur}-${x.Numero}`).join('  |  '):'—';
+  dzone.textContent=(s.difficulte&&s.difficulte.length)?s.difficulte.map((x,i)=>`D${i+1}:${x.cotation}|X${x.relais}|${x.style}|${x.resultat}${x.motif?':'+x.motif:''}`).join('  |  '):'—';
+  bzone.textContent=(s.bloc&&s.bloc.length)?s.bloc.map((x,i)=>`B${i+1}:${x.c}-${x.n} (${x.lvl})`).join('  |  '):'—';
 } render();
 
 document.getElementById('btn_qr').onclick=()=>{
-  const s=loadSeance(); const ascii=document.getElementById('ascii').checked, nolabel=document.getElementById('nolabel').checked;
-  let cells=[id.Nom,id.Prenom,id.Classe];
-  if(s.vitesse && s.vitesse.best){ cells.push(nolabel?`${s.vitesse.best}`, `${s.vitesse.count||0}` : `V_BestTemps=${s.vitesse.best}`, `V_NbEssais=${s.vitesse.count||0}`); }
-  if(s.bloc && s.bloc.length){ s.bloc.forEach((b,i)=>cells.push(nolabel?`${b.Couleur}-${b.Numero}`:`B${i+1}=${b.Couleur}-${b.Numero}`)); }
-  if(s.difficulte && s.difficulte.length){ s.difficulte.forEach((d,i)=>{ const sstr = `${d.Cotation}|X${d.Relais}|${d.Style}|${d.Resultat==='reussie'?'OK':'NT:'+ (d.MotifTxt||'')}`; cells.push(nolabel?`${sstr}`:`D${i+1}=${sstr}`); }); }
-  const line = buildCSV(cells,{ascii});
-  makeQR('qrs', line); jsons.textContent=line; document.getElementById('qr-section').style.display='block';
+  const s=loadSeance();
+  const obj={Nom:id.Nom, Prenom:id.Prenom, Classe:id.Classe};
+  if(s.vitesse && s.vitesse.best){ obj.Vitesse={best:s.vitesse.best, nb:s.vitesse.nb}; }
+  if(s.bloc && s.bloc.length){ obj.Bloc=s.bloc.map(b=>({couleur:b.c, numero:b.n, niveau:b.lvl})); }
+  if(s.difficulte && s.difficulte.length){ obj.Difficulte=s.difficulte; }
+  const txt=makeQR('qrs', obj); jsons.textContent=txt; document.getElementById('qr-section').style.display='block';
 };
 </script></body></html>
