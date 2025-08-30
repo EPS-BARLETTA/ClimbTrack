@@ -1,81 +1,146 @@
 <!doctype html><html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ClimbTrack — Recadrer la photo</title><link rel="stylesheet" href="style.css"></head>
+<title>ClimbTrack — Recadrer & Dessiner</title><link rel="stylesheet" href="style.css">
+<style>
+.toolbar{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:center; padding:10px; background:rgba(17,24,39,.92); color:#e5e7eb; border-radius:16px; }
+.stage{ position:relative; width:min(980px,96vw); height:70vh; margin:12px auto; background:#000; border-radius:16px; overflow:hidden; touch-action:none; }
+canvas#stage{ position:absolute; inset:0; width:100%; height:100%; }
+.help{ text-align:center; color:#cbd5e1; }
+</style></head>
 <body><div class="main-wrap"><div class="container">
-  <div class="headerbar"><div class="logo">🖼️ <span class="highlight">Recadrer la photo</span></div>
+  <div class="headerbar"><div class="logo">🖼️ <span class="highlight">Recadrer & Dessiner</span></div>
     <div class="right"><a class="btn green big" href="menu.html">🏠 Menu</a></div></div>
+
   <div class="card">
-    <h2>Étape 2 — Cadre ta zone (zoom + déplacement + rotation)</h2>
-    <div class="crop-wrap">
-      <div class="crop-frame" id="frame">
-        <img id="img" class="crop-img" alt="photo" />
-        <div class="overlay"></div>
-      </div>
-      <div class="ctrls">
-        <label>Zoom <input id="zoom" type="range" min="50" max="300" value="100" class="slider"></label>
-        <button class="btn amber" id="fit">Ajuster</button>
-        <button class="btn blue" id="rot">Rotation 90°</button>
-        <button class="btn green" id="go">Recadrer & dessiner</button>
-      </div>
-      <p class="note center">Astuce iPad : pincer pour zoomer, glisser pour déplacer l’image.</p>
+    <div class="toolbar">
+      <strong>Outil</strong>
+      <select id="tool">
+        <option value="pen">Écriture au doigt</option>
+        <option value="circle">Cercle</option>
+        <option value="erase">Gomme (dernier)</option>
+        <option value="clear">Tout effacer</option>
+      </select>
+      <label>Épaisseur/Rayon <input id="size" type="range" min="6" max="48" value="16"></label>
+      <label>Couleur
+        <select id="color">
+          <option value="#22c55e">Vert</option>
+          <option value="#3b82f6">Bleu</option>
+          <option value="#ef4444">Rouge</option>
+          <option value="#fde047">Jaune</option>
+          <option value="#e5e7eb">Blanc</option>
+        </select>
+      </label>
+      <label>Zoom <input id="zoom" type="range" min="50" max="300" value="100"></label>
+      <button class="btn amber" id="fit">Ajuster</button>
+      <button class="btn blue" id="rot">Rotation 90°</button>
+      <button class="btn blue" id="save">Sauvegarder (PNG)</button>
+      <button class="btn green" id="save_local">Sauvegarder dans l’app</button>
+      <a class="btn" href="route-gallery.html">Mes voies</a>
     </div>
+
+    <div class="stage"><canvas id="stage"></canvas></div>
+    <p class="help">Astuce iPad : <strong>1 doigt</strong> = dessiner (selon l’outil) • <strong>2 doigts</strong> = déplacer/zoomer la photo.</p>
   </div>
 </div></div>
 <footer><div class="container"><div class="footer-inner"></div></div></footer>
 
 <script type="module">
-import {getRouteImage, setRouteImage, renderFooter} from './app.js';
+import {getRouteImage, saveRouteToGallery, renderFooter} from './app.js';
 renderFooter();
-const src = getRouteImage(); if(!src){ alert('Pas de photo. Reviens à la capture.'); location.href='route-capture.html'; }
-const img = document.getElementById('img'); const frame=document.getElementById('frame');
-const zoom=document.getElementById('zoom'); const fitBtn=document.getElementById('fit'); const rotBtn=document.getElementById('rot'); const goBtn=document.getElementById('go');
+const dataURL=getRouteImage(); if(!dataURL){ alert('Pas de photo. Reviens à la capture.'); location.href='route-capture.html'; }
 
-let scale=1, angle=0, dx=0, dy=0, baseDist=0, baseScale=1, dragging=false, lastX=0, lastY=0;
+const canvas=document.getElementById('stage'); const ctx=canvas.getContext('2d');
+const tool=document.getElementById('tool'); const size=document.getElementById('size'); const color=document.getElementById('color');
+const zoom=document.getElementById('zoom'); const fitBtn=document.getElementById('fit'); const rotBtn=document.getElementById('rot');
+const saveBtn=document.getElementById('save'); const saveLocal=document.getElementById('save_local');
 
-img.onload=()=>{ fit(); };
-img.src=src;
+const img=new Image(); img.src=dataURL;
+let angle=0, scale=1, fitScale=1, dx=0, dy=0;
+let strokes=[], circles=[], drawing=false, currentStroke=null;
+let pinchBaseDist=0, pinchBaseScale=1, lastMid=null;
 
-function frameSize(){ const r=frame.getBoundingClientRect(); return {w:r.width, h:r.height}; }
-function apply(){ img.style.transform=`translate(${dx}px,${dy}px) rotate(${angle}deg) scale(${scale}) translate(-50%,-50%)`; }
-function fit(){ const {w,h}=frameSize(); const iw=img.naturalWidth, ih=img.naturalHeight; const ar=iw/ih; let fw=w, fh=w/ar; if(fh<h){ fh=h; fw=fh*ar; }
-  const base = fw/iw; scale = base*(zoom.value/100); dx=0; dy=0; apply(); }
+function resize(){ const dpr=window.devicePixelRatio||1; const rect=canvas.getBoundingClientRect(); canvas.width=Math.round(rect.width*dpr); canvas.height=Math.round(rect.height*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0); draw(); }
+const ro=new ResizeObserver(resize); ro.observe(canvas);
 
-zoom.addEventListener('input', ()=>{ const {w,h}=frameSize(); const iw=img.naturalWidth, ih=img.naturalHeight; const ar=iw/ih; let fw=w, fh=w/ar; if(fh<h){ fh=h; fw=fh*ar; } const base = fw/iw; scale = base*(zoom.value/100); apply(); });
-fitBtn.onclick=fit;
-rotBtn.onclick=()=>{ angle=(angle+90)%360; apply(); };
+function fit(){ if(!img.naturalWidth) return; const rect=canvas.getBoundingClientRect(); const iw=img.naturalWidth, ih=img.naturalHeight; const ar=iw/ih;
+  let w=rect.width, h=w/ar; if(h>rect.height){ h=rect.height; w=h*ar; } fitScale=w/iw; scale=fitScale*(zoom.value/100); dx=0; dy=0; draw(); }
 
-// Drag/pan + pinch
-function startDrag(x,y){ dragging=true; lastX=x; lastY=y; }
-function moveDrag(x,y){ if(!dragging) return; dx += (x-lastX); dy += (y-lastY); lastX=x; lastY=y; apply(); }
-function endDrag(){ dragging=false; }
-frame.addEventListener('mousedown', e=>startDrag(e.clientX,e.clientY));
-window.addEventListener('mousemove', e=>moveDrag(e.clientX,e.clientY));
-window.addEventListener('mouseup', endDrag);
-frame.addEventListener('touchstart', (e)=>{
-  if(e.touches.length===1){ startDrag(e.touches[0].clientX, e.touches[0].clientY); baseDist=0; }
-  else if(e.touches.length===2){ dragging=false; baseDist=dist(e.touches[0], e.touches[1]); baseScale=scale; }
-},{passive:false});
-frame.addEventListener('touchmove', (e)=>{
-  if(e.touches.length===1 && dragging){ moveDrag(e.touches[0].clientX, e.touches[0].clientY); }
-  else if(e.touches.length===2){ const d=dist(e.touches[0], e.touches[1]); if(!baseDist) baseDist=d; const factor=d/baseDist; scale = baseScale*factor; apply(); }
-},{passive:false});
-window.addEventListener('touchend', endDrag);
-function dist(a,b){ const dx=a.clientX-b.clientX, dy=a.clientY-b.clientY; return Math.hypot(dx,dy); }
+function applyTransform(){ const rect=canvas.getBoundingClientRect(); const cx=rect.width/2, cy=rect.height/2;
+  ctx.translate(cx+dx, cy+dy); ctx.rotate(angle*Math.PI/180); ctx.scale(scale, scale); ctx.translate(-img.naturalWidth/2, -img.naturalHeight/2); }
 
-goBtn.onclick=()=>{
-  const {w,h}=frameSize(); const dpr=window.devicePixelRatio||1; const c=document.createElement('canvas'); c.width=Math.round(w*dpr); c.height=Math.round(h*dpr);
-  const ctx=c.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0);
-  ctx.fillStyle='#000'; ctx.fillRect(0,0,w,h);
-  ctx.save();
-  ctx.translate(w/2 + dx, h/2 + dy);
-  ctx.rotate(angle*Math.PI/180);
-  ctx.scale(scale, scale);
-  const iw=img.naturalWidth, ih=img.naturalHeight;
-  ctx.drawImage(img, -iw/2, -ih/2);
+function draw(){ ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.save(); applyTransform(); ctx.drawImage(img, 0, 0); // image
+  // strokes
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  for(const s of strokes){ ctx.beginPath(); for(let i=0;i<s.pts.length;i++){ const p=s.pts[i]; const x=p.x, y=p.y; if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); }
+    ctx.lineWidth = s.w / scale; ctx.strokeStyle=s.color; ctx.globalAlpha=0.95; ctx.stroke(); ctx.globalAlpha=1; }
+  for(const c of circles){ ctx.beginPath(); ctx.arc(c.x, c.y, c.r/scale, 0, Math.PI*2); ctx.lineWidth=3/scale; ctx.strokeStyle=c.color; ctx.globalAlpha=0.95; ctx.stroke(); ctx.globalAlpha=1; }
   ctx.restore();
-  const out=c.toDataURL('image/png');
-  setRouteImage(out);
-  location.href='route-draw.html';
+}
+
+function screenToImage(px,py){ const rect=canvas.getBoundingClientRect(); const cx=rect.width/2, cy=rect.height/2;
+  let x=px-(cx+dx), y=py-(cy+dy);
+  const a=-angle*Math.PI/180; const cos=Math.cos(a), sin=Math.sin(a); const rx = x*cos - y*sin; const ry = x*sin + y*cos;
+  const ix = rx/scale + img.naturalWidth/2; const iy = ry/scale + img.naturalHeight/2; return {x:ix, y:iy}; }
+
+function pointerDown(px,py){ if(tool.value==='erase'){ if(strokes.length) strokes.pop(); else if(circles.length) circles.pop(); draw(); return; }
+  if(tool.value==='clear'){ if(confirm('Tout effacer ?')){ strokes=[]; circles=[]; draw(); } return; }
+  if(tool.value==='circle'){ const p=screenToImage(px,py); circles.push({x:p.x, y:p.y, r: +size.value, color: color.value}); draw(); return; }
+  // pen
+  const p=screenToImage(px,py); currentStroke={w:+size.value, color:color.value, pts:[p]}; strokes.push(currentStroke); drawing=true; draw();
+}
+function pointerMove(px,py){ if(!drawing) return; const p=screenToImage(px,py); currentStroke.pts.push(p); draw(); }
+function pointerUp(){ drawing=false; currentStroke=null; }
+
+// Mouse
+let mouseDown=false;
+canvas.addEventListener('mousedown', e=>{ mouseDown=true; if(e.buttons===1) pointerDown(e.offsetX, e.offsetY); });
+canvas.addEventListener('mousemove', e=>{ if(mouseDown && drawing) pointerMove(e.offsetX, e.offsetY); });
+window.addEventListener('mouseup', ()=>{ mouseDown=false; pointerUp(); });
+
+// Touch: single finger draws, two fingers pan/zoom
+canvas.addEventListener('touchstart', e=>{
+  if(e.touches.length===1){ const t=e.touches[0]; pointerDown(t.clientX - canvas.getBoundingClientRect().left, t.clientY - canvas.getBoundingClientRect().top); }
+  else if(e.touches.length===2){ drawing=false; currentStroke=null; const a=e.touches[0], b=e.touches[1]; pinchBaseDist=Math.hypot(a.clientX-b.clientX, a.clientY-b.clientY); pinchBaseScale=scale; lastMid={x:(a.clientX+b.clientX)/2, y:(a.clientY+b.clientY)/2}; }
+},{passive:false});
+canvas.addEventListener('touchmove', e=>{
+  if(e.touches.length===1 && drawing){ const t=e.touches[0]; pointerMove(t.clientX - canvas.getBoundingClientRect().left, t.clientY - canvas.getBoundingClientRect().top); }
+  else if(e.touches.length===2){ const a=e.touches[0], b=e.touches[1]; const dist=Math.hypot(a.clientX-b.clientX, a.clientY-b.clientY); const factor=dist/pinchBaseDist; scale = pinchBaseScale*factor; zoom.value = Math.round((scale/fitScale)*100);
+    const mid={x:(a.clientX+b.clientX)/2, y:(a.clientY+b.clientY)/2}; dx += (mid.x-lastMid.x); dy += (mid.y-lastMid.y); lastMid=mid; draw(); }
+},{passive:false});
+window.addEventListener('touchend', ()=>{ drawing=false; currentStroke=null; }, {passive:false});
+
+zoom.addEventListener('input', ()=>{ scale = fitScale*(zoom.value/100); draw(); });
+fitBtn.onclick=fit;
+rotBtn.onclick=()=>{ angle=(angle+90)%360; draw(); };
+
+saveBtn.onclick=()=>{
+  // export composited current view at canvas CSS size
+  const rect=canvas.getBoundingClientRect(); const c=document.createElement('canvas'); c.width=rect.width; c.height=rect.height; const cctx=c.getContext('2d');
+  // draw image
+  cctx.save(); const cx=rect.width/2, cy=rect.height/2;
+  cctx.translate(cx+dx, cy+dy); cctx.rotate(angle*Math.PI/180); cctx.scale(scale, scale); cctx.translate(-img.naturalWidth/2, -img.naturalHeight/2);
+  cctx.drawImage(img,0,0);
+  // strokes
+  cctx.lineCap='round'; cctx.lineJoin='round';
+  for(const s of strokes){ cctx.beginPath(); for(let i=0;i<s.pts.length;i++){ const p=s.pts[i]; const x=p.x, y=p.y; if(i===0) cctx.moveTo(x,y); else cctx.lineTo(x,y); } cctx.lineWidth = s.w; cctx.strokeStyle=s.color; cctx.globalAlpha=0.95; cctx.stroke(); cctx.globalAlpha=1; }
+  for(const c0 of circles){ cctx.beginPath(); cctx.arc(c0.x, c0.y, c0.r, 0, Math.PI*2); cctx.lineWidth=3; cctx.strokeStyle=c0.color; cctx.globalAlpha=0.95; cctx.stroke(); cctx.globalAlpha=1; }
+  cctx.restore();
+  const a=document.createElement('a'); a.download='climbtrack_voie.png'; a.href=c.toDataURL('image/png'); a.click();
 };
+saveLocal.onclick=()=>{
+  const rect=canvas.getBoundingClientRect(); const c=document.createElement('canvas'); c.width=rect.width; c.height=rect.height; const cctx=c.getContext('2d');
+  cctx.save(); const cx=rect.width/2, cy=rect.height/2;
+  cctx.translate(cx+dx, cy+dy); cctx.rotate(angle*Math.PI/180); cctx.scale(scale, scale); cctx.translate(-img.naturalWidth/2, -img.naturalHeight/2);
+  cctx.drawImage(img,0,0);
+  cctx.lineCap='round'; cctx.lineJoin='round';
+  for(const s of strokes){ cctx.beginPath(); for(let i=0;i<s.pts.length;i++){ const p=s.pts[i]; const x=p.x, y=p.y; if(i===0) cctx.moveTo(x,y); else cctx.lineTo(x,y); } cctx.lineWidth = s.w; cctx.strokeStyle=s.color; cctx.globalAlpha=0.95; cctx.stroke(); cctx.globalAlpha=1; }
+  for(const c0 of circles){ cctx.beginPath(); cctx.arc(c0.x, c0.y, c0.r, 0, Math.PI*2); cctx.lineWidth=3; cctx.strokeStyle=c0.color; cctx.globalAlpha=0.95; cctx.stroke(); cctx.globalAlpha=1; }
+  cctx.restore();
+  saveRouteToGallery(c.toDataURL('image/png')); alert('Voie sauvegardée dans l\'app ✅');
+};
+
+img.onload=()=>{ fit(); }; // fit after image loads
 </script>
 </body></html>
