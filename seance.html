@@ -56,9 +56,10 @@ document.getElementById('btn_qr').onclick=()=>{
   if(s.bloc && s.bloc.length){ s.bloc.forEach((b,idx)=>{ obj['bloc_'+(idx+1)] = `${b.c} R${b.n}`; }); }
   if(s.difficulte && s.difficulte.length){ s.difficulte.forEach((d,idx)=>{
     const mark = d.resultat==='OK' ? '✅' : ('❌ ' + motifCode(d.motif));
-    obj['difficulte_'+(idx+1)] = `${d.cotation} R${d.relais} ${mark}`;
+    const markAscii = d.resultat==='OK' ? 'OK' : ('NT ' + motifCode(d.motif));
+    obj['difficulte_'+(idx+1)] = `${d.cotation} R${d.relais} ${markAscii}`;
   }); }
   if(s.vitesse && s.vitesse.best){ obj.vitesse = s.vitesse.best; }
-  const txt=makeQR('qrs', obj); jsons.textContent=txt; document.getElementById('qr-section').style.display='block';
+  const txt=makeQR('qrs', obj); jsons.textContent = txt; document.getElementById('qr-section').style.display='block';
 };
 </script></body></html>
