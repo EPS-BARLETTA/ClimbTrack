@@ -12,11 +12,11 @@ export function parseTimeToCentis(s){const m=+s.slice(0,2)||0, x=+s.slice(3,5)||
 export function formatTime(m,s,c){m=+m||0; s=+s||0; c=+c||0; if(s>=60){m+=Math.floor(s/60); s%=60;} return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}:${String(c).padStart(2,'0')}`;}
 
 // QR as JSON array with one object
-export function makeQR(el, obj){ if(typeof el==='string') el=document.getElementById(el); if(!el) return;
+export function makeQR(el, obj, level='H'){ if(typeof el==='string') el=document.getElementById(el); if(!el) return;
   const text = JSON.stringify([obj]);
   el.innerHTML='';
   function build(){ if(typeof QRCode==='undefined'){ setTimeout(build,80); return; }
-    new QRCode(el,{ text, width:512, height:512, correctLevel:QRCode.CorrectLevel.H });
+    new QRCode(el,{ text, width:512, height:512, correctLevel:QRCode.CorrectLevel[level] || QRCode.CorrectLevel.H });
   } build(); return text;
 }
 

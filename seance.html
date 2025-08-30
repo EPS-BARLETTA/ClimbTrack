@@ -39,13 +39,14 @@ function motifCode(m){
   if(m==='technique') return 'D'; // difficulté technique (code D)
   return '';
 }
+function styleCode(sty){ if(sty==='moulinette') return 'M'; if(sty==='en_tete') return 'T'; if(sty==='mouli_tete') return 'MT'; return ''; }
 
 function render(){ const s=loadSeance();
   const vTxt=(s.vitesse&&s.vitesse.best)?`Best=${s.vitesse.best} • NbEssais=${s.vitesse.nb}`:'—';
   vzone.textContent=vTxt;
   dzone.textContent=(s.difficulte&&s.difficulte.length)?s.difficulte.map((x,i)=>{
     const mark = x.resultat==='OK' ? '✅' : ('❌ ' + motifCode(x.motif));
-    return `D${i+1}:${x.cotation} R${x.relais} ${mark}`;
+    return `D${i+1}:${x.cotation} R${x.relais} [${styleCode(x.style)}] ${mark}`;
   }).join('  |  '):'—';
   bzone.textContent=(s.bloc&&s.bloc.length)?s.bloc.map((x,i)=>`B${i+1}:${x.c} R${x.n}`).join('  |  '):'—';
 } render();
@@ -56,7 +57,8 @@ document.getElementById('btn_qr').onclick=()=>{
   if(s.bloc && s.bloc.length){ s.bloc.forEach((b,idx)=>{ obj['bloc_'+(idx+1)] = `${b.c} R${b.n}`; }); }
   if(s.difficulte && s.difficulte.length){ s.difficulte.forEach((d,idx)=>{
     const markAscii = d.resultat==='OK' ? 'OK' : ('NT ' + motifCode(d.motif));
-    obj['difficulte_'+(idx+1)] = `${d.cotation} R${d.relais} ${markAscii}`;
+    const sc=styleCode(d.style);
+    obj['difficulte_'+(idx+1)] = `${d.cotation} R${d.relais} ${sc} ${markAscii}`;
   }); }
   if(s.vitesse && s.vitesse.best){ obj.vitesse = s.vitesse.best; }
   const txt=makeQR('qrs', obj); jsons.textContent=txt; document.getElementById('qr-section').style.display='block';

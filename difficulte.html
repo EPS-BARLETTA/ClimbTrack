@@ -29,13 +29,14 @@ document.getElementById('idline').innerHTML = `Élève : <strong>${id.prenom} ${
 
 function motifCode(m){
   if(!m) return '';
-  if(m.startsWith('degX')) return 'D'+m.replace('degX','');
-  if(m.startsWith('autre_prise:n')) return 'AP'+m.replace('autre_prise:n','');
+  if(m.startsWith('degX')) return 'D'+m.replace('degX',''); // D + numéro
+  if(m.startsWith('autre_prise:n')) return 'AP'+m.replace('autre_prise:n',''); // AP + nb
   if(m==='fatigue') return 'F';
   if(m==='peur') return 'P';
-  if(m==='technique') return 'D';
+  if(m==='technique') return 'D'; // difficulté technique (code D)
   return '';
 }
+function styleCode(sty){ if(sty==='moulinette') return 'M'; if(sty==='en_tete') return 'T'; if(sty==='mouli_tete') return 'MT'; return ''; }
 
 const tbody=document.querySelector('#d_table tbody'); const list=[];
 const dres=document.getElementById('d_resultat'), motifs=document.getElementById('motifs'), motifSel=document.getElementById('d_motif');
@@ -57,7 +58,7 @@ document.getElementById('btn_save').onclick=()=>{ const s=loadSeance(); s.diffic
 document.getElementById('btn_qr').onclick=()=>{
   if(!list.length){ alert('Ajoute une réalisation'); return; }
   const obj={ nom:id.nom, prenom:id.prenom, classe:id.classe };
-  list.forEach((d,idx)=>{ const markAscii = d.resultat==='OK' ? 'OK' : ('NT ' + motifCode(d.motif)); obj['difficulte_'+(idx+1)] = `${d.cotation} R${d.relais} ${markAscii}`; });
+  list.forEach((d,idx)=>{ const markAscii = d.resultat==='OK' ? 'OK' : ('NT ' + motifCode(d.motif)); const sc=styleCode(d.style); obj['difficulte_'+(idx+1)] = `${d.cotation} R${d.relais} ${sc} ${markAscii}`; });
   const txt=makeQR('qrd', obj); jsond.textContent=txt; document.getElementById('qr-section').style.display='block';
 };
 </script></body></html>
