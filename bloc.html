@@ -35,7 +35,7 @@ const id = getIdentite();
 document.getElementById('idline').innerHTML = `Élève : <strong>${id.prenom} ${id.nom}</strong> — <span class='badge'>Classe : ${id.classe}</span>`;
 const levelMap={jaune:'facile', vert:'peu_difficile', bleu:'assez_difficile', rouge:'difficile', noir:'tres_difficile', mauve:'abominable'};
 const list=[], tbody=document.querySelector('#b_table tbody');
-function render(){ tbody.innerHTML=''; list.forEach((it,i)=>{ const icon = it.c==='noir' ? '<span class="dot-noir"></span>' : `<span class="color-dot dot-${it.c}"></span>`; const tr=document.createElement('tr'); tr.innerHTML=`<td>${i+1}</td><td>${icon}${it.c}</td><td>${levelMap[it.c]}</td><td>${it.n}</td><td><button class="btn red" data-i="${i}">Supprimer</button></td>`; tbody.appendChild(tr); });
+function render(){ tbody.innerHTML=''; list.forEach((it,i)=>{ const icon = `<span class="color-dot dot-${it.c}"></span>`; const tr=document.createElement('tr'); tr.innerHTML=`<td>${i+1}</td><td>${icon}${it.c}</td><td>${levelMap[it.c]}</td><td>${it.n}</td><td><button class="btn red" data-i="${i}">Supprimer</button></td>`; tbody.appendChild(tr); });
   tbody.querySelectorAll('button[data-i]').forEach(btn=>btn.addEventListener('click', e=>{ list.splice(+e.currentTarget.dataset.i,1); render(); })); }
 document.getElementById('b_add').onclick=()=>{ const c=b_couleur.value; const n=parseInt(b_num.value||'0',10); if(!n){alert('Numéro ?');return;} list.push({c, n, lvl:levelMap[c]}); render(); };
 document.getElementById('b_clear').onclick=()=>{ list.length=0; render(); };

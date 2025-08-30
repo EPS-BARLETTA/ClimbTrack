@@ -62,10 +62,10 @@ footer{ margin-top:auto; padding:22px 0 30px; }
 .table{ width:100%; border-collapse:collapse; margin-top:12px; }
 .table th,.table td{ padding:12px 14px; border-bottom:1px dashed rgba(255,255,255,.12); text-align:center; font-size:1.02rem; }
 .table th{ color:#d7e5ff; font-weight:900; }
-.color-dot{ width:14px; height:14px; border-radius:999px; display:inline-block; vertical-align:middle; margin-right:8px; }
+.color-dot{ width:14px; height:14px; border-radius:3px; display:inline-block; vertical-align:middle; margin-right:8px; }
 .dot-jaune{ background:#fde047 } .dot-vert{ background:#22c55e } .dot-bleu{ background:#3b82f6 } .dot-rouge{ background:#ef4444 }
-.dot-noir{ display:inline-block; width:14px; height:14px; border-radius:3px; background:#000000; vertical-align:middle; margin-right:8px; } /* square */
-.dot-mauve{ background:#a78bfa; border-radius:999px; width:14px; height:14px; display:inline-block; vertical-align:middle; margin-right:8px; }
+.dot-noir{ background:#000000 } /* square */
+.dot-mauve{ background:#a78bfa }
 .small{ font-size:1rem; color:var(--text-dim); }
 .qr-wrap{ display:flex; gap:18px; flex-wrap:wrap; align-items:flex-start; justify-content:center; margin-top:16px; }
 .qr-box{ padding:14px; border-radius:16px; border:1px solid rgba(0,0,0,.15); background:#fff; }
