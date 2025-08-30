@@ -20,6 +20,20 @@ export function makeQR(el, obj){ if(typeof el==='string') el=document.getElement
   } build(); return text;
 }
 
-// route photo pass
+// route photo pass + gallery
 export function setRouteImage(dataURL){ sessionStorage.setItem(CT_ROUTE_IMG, dataURL); }
 export function getRouteImage(){ return sessionStorage.getItem(CT_ROUTE_IMG)||null; }
+
+export const CT_ROUTE_GALLERY='ct_route_gallery';
+export function saveRouteToGallery(dataURL){
+  let arr=[]; try{ arr=JSON.parse(localStorage.getItem(CT_ROUTE_GALLERY)||'[]'); }catch(e){ arr=[]; }
+  const rec={ id: Date.now(), img:dataURL };
+  arr.unshift(rec);
+  localStorage.setItem(CT_ROUTE_GALLERY, JSON.stringify(arr));
+}
+export function getRouteGallery(){
+  try{ return JSON.parse(localStorage.getItem(CT_ROUTE_GALLERY)||'[]'); }catch(e){ return []; }
+}
+export function deleteRouteFromGallery(id){
+  let arr=getRouteGallery(); arr = arr.filter(x=>x.id!==id); localStorage.setItem(CT_ROUTE_GALLERY, JSON.stringify(arr));
+}

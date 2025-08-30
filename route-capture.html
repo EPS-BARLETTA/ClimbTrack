@@ -22,8 +22,8 @@ import {setRouteImage, renderFooter} from './app.js';
 renderFooter();
 const video=document.getElementById('video'), openBtn=document.getElementById('open-camera'), snapBtn=document.getElementById('snap'); let stream=null;
 async function openCamera(){ try{ stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}); video.srcObject=stream; video.style.display='block'; snapBtn.disabled=false; }catch(e){ alert('Caméra non disponible. Utilise l’import.'); } }
-function snap(){ if(!stream) return; const v=video; const c=document.createElement('canvas'); c.width=v.videoWidth; c.height=v.videoHeight; c.getContext('2d').drawImage(v,0,0); const data=c.toDataURL('image/jpeg',0.9); setRouteImage(data); if(stream){ stream.getTracks().forEach(t=>t.stop()); } location.href='route-draw.html'; }
+function snap(){ if(!stream) return; const v=video; const c=document.createElement('canvas'); c.width=v.videoWidth; c.height=v.videoHeight; c.getContext('2d').drawImage(v,0,0); const data=c.toDataURL('image/jpeg',0.9); setRouteImage(data); if(stream){ stream.getTracks().forEach(t=>t.stop()); } location.href='route-crop.html'; }
 openBtn.onclick=openCamera; snapBtn.onclick=snap;
-document.getElementById('file').onchange=(e)=>{ const f=e.target.files[0]; if(!f) return; const reader=new FileReader(); reader.onload=()=>{ setRouteImage(reader.result); location.href='route-draw.html'; }; reader.readAsDataURL(f); };
+document.getElementById('file').onchange=(e)=>{ const f=e.target.files[0]; if(!f) return; const reader=new FileReader(); reader.onload=()=>{ setRouteImage(reader.result); location.href='route-crop.html'; }; reader.readAsDataURL(f); };
 </script>
 </body></html>

@@ -25,6 +25,8 @@
 import {getIdentite, ensureIdentite, renderFooter, loadSeance, saveSeance, makeQR} from './app.js';
 renderFooter(); ensureIdentite();
 const id = getIdentite();
+document.getElementById('idline').innerHTML = `Élève : <strong>${id.prenom} ${id.nom}</strong> — <span class='badge'>Classe : ${id.classe}</span>`;
+
 function motifCode(m){
   if(!m) return '';
   if(m.startsWith('degX')) return 'D'+m.replace('degX','');
@@ -34,7 +36,6 @@ function motifCode(m){
   if(m==='technique') return 'D';
   return '';
 }
-document.getElementById('idline').innerHTML = `Élève : <strong>${id.prenom} ${id.nom}</strong> — <span class='badge'>Classe : ${id.classe}</span>`;
 
 const tbody=document.querySelector('#d_table tbody'); const list=[];
 const dres=document.getElementById('d_resultat'), motifs=document.getElementById('motifs'), motifSel=document.getElementById('d_motif');

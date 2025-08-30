@@ -26,6 +26,8 @@
     <label>Zoom <input id="zoom" type="range" min="50" max="200" value="100" class="slider"></label>
     <button class="btn amber" id="fit">Ajuster</button>
     <button class="btn blue" id="save">Sauvegarder (PNG)</button>
+    <button class="btn green" id="save_local">Sauvegarder dans l’app</button>
+    <a class="btn" href="route-gallery.html">Mes voies</a>
     <a class="btn green" href="menu.html">Terminer</a>
   </div>
   <div class="fs-canvas">
@@ -34,13 +36,13 @@
 </div>
 
 <script type="module">
-import {getRouteImage} from './app.js';
+import {getRouteImage, saveRouteToGallery} from './app.js';
 const dataURL = getRouteImage();
 if(!dataURL){ alert('Pas de photo. Reviens à la capture.'); location.href='route-capture.html'; }
 
 const canvas=document.getElementById('canvas'); const ctx=canvas.getContext('2d');
 const tool=document.getElementById('tool'); const size=document.getElementById('size'); const color=document.getElementById('color');
-const zoom=document.getElementById('zoom'); const fitBtn=document.getElementById('fit'); const saveBtn=document.getElementById('save');
+const zoom=document.getElementById('zoom'); const fitBtn=document.getElementById('fit'); const saveBtn=document.getElementById('save'); const saveLocal=document.getElementById('save_local');
 
 const img=new Image(); let scale=1, fitScale=1; const strokes=[], circles=[]; let drawing=false, currentStroke=null;
 
@@ -76,6 +78,7 @@ function end(){ drawing=false; currentStroke=null; }
 zoom.addEventListener('input', ()=>{ scale = fitScale * (zoom.value/100); draw(); });
 fitBtn.onclick=fit;
 saveBtn.onclick=()=>{ const a=document.createElement('a'); a.download='climbtrack_voie.png'; a.href=canvas.toDataURL('image/png'); a.click(); };
+saveLocal.onclick=()=>{ const data=canvas.toDataURL('image/png'); saveRouteToGallery(data); alert('Voie sauvegardée dans l\'app ✅'); };
 
 function init(){ resizeCanvas(); fit(); }
 window.addEventListener('resize', ()=>{ resizeCanvas(); fit(); });
