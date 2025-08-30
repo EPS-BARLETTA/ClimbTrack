@@ -42,7 +42,6 @@ document.getElementById('b_clear').onclick=()=>{ list.length=0; render(); };
 document.getElementById('b_save').onclick=()=>{ const s=loadSeance(); s.bloc=list.slice(); saveSeance(s); alert('Blocs enregistrés ✅'); };
 document.getElementById('b_qr').onclick=()=>{
   if(!list.length){ alert('Ajoute un bloc'); return; }
-  // Build ordered object: nom, prenom, classe, bloc_1, bloc_2...
   const obj = { nom:id.nom, prenom:id.prenom, classe:id.classe };
   list.forEach((b,idx)=>{ obj['bloc_'+(idx+1)] = `${b.c} R${b.n}`; });
   const txt=makeQR('qrb', obj); jsonb.textContent=txt; document.getElementById('qr-section').style.display='block';

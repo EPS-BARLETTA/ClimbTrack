@@ -17,7 +17,7 @@
 
     <div class="center" style="margin-top:16px;">
       <button class="btn green big" id="btn_qr">📷 Un seul QR pour tout</button>
-      <p class="note">Ordre des champs : <strong>nom, prenom, classe, blocs..., difficultes..., vitesse</strong></p>
+      <p class="note">Ordre des champs : <strong>nom, prenom, classe, bloc_*, difficulte_*, vitesse</strong></p>
       <div id="qr-section" style="display:none;margin-top:12px;">
         <div class="qr-wrap"><div class="qr-box" id="qrs"></div></div>
         <pre class="pre" id="jsons"></pre>
@@ -29,19 +29,35 @@
 <script type="module">
 import {getIdentite, ensureIdentite, renderFooter, makeQR, loadSeance} from './app.js';
 renderFooter(); ensureIdentite(); const id=getIdentite(); document.getElementById('idline').innerHTML=`Élève : <strong>${id.prenom} ${id.nom}</strong> — <span class='badge'>Classe : ${id.classe}</span>`;
+
+function motifCode(m){
+  if(!m) return '';
+  if(m.startsWith('degX')) return 'D'+m.replace('degX',''); // D + numéro
+  if(m.startsWith('autre_prise:n')) return 'AP'+m.replace('autre_prise:n',''); // AP + nb
+  if(m==='fatigue') return 'F';
+  if(m==='peur') return 'P';
+  if(m==='technique') return 'D'; // difficulté technique (code D)
+  return '';
+}
+
 function render(){ const s=loadSeance();
   const vTxt=(s.vitesse&&s.vitesse.best)?`Best=${s.vitesse.best} • NbEssais=${s.vitesse.nb}`:'—';
   vzone.textContent=vTxt;
-  dzone.textContent=(s.difficulte&&s.difficulte.length)?s.difficulte.map((x,i)=>`D${i+1}:${x.cotation} R${x.relais}`).join('  |  '):'—';
+  dzone.textContent=(s.difficulte&&s.difficulte.length)?s.difficulte.map((x,i)=>{
+    const mark = x.resultat==='OK' ? '✅' : ('❌ ' + motifCode(x.motif));
+    return `D${i+1}:${x.cotation} R${x.relais} ${mark}`;
+  }).join('  |  '):'—';
   bzone.textContent=(s.bloc&&s.bloc.length)?s.bloc.map((x,i)=>`B${i+1}:${x.c} R${x.n}`).join('  |  '):'—';
 } render();
 
 document.getElementById('btn_qr').onclick=()=>{
   const s=loadSeance();
-  // Ordered keys: nom, prenom, classe, bloc_1..., difficulte_1..., vitesse
   const obj={ nom:id.nom, prenom:id.prenom, classe:id.classe };
   if(s.bloc && s.bloc.length){ s.bloc.forEach((b,idx)=>{ obj['bloc_'+(idx+1)] = `${b.c} R${b.n}`; }); }
-  if(s.difficulte && s.difficulte.length){ s.difficulte.forEach((d,idx)=>{ obj['difficulte_'+(idx+1)] = `${d.cotation} R${d.relais}`; }); }
+  if(s.difficulte && s.difficulte.length){ s.difficulte.forEach((d,idx)=>{
+    const mark = d.resultat==='OK' ? '✅' : ('❌ ' + motifCode(d.motif));
+    obj['difficulte_'+(idx+1)] = `${d.cotation} R${d.relais} ${mark}`;
+  }); }
   if(s.vitesse && s.vitesse.best){ obj.vitesse = s.vitesse.best; }
   const txt=makeQR('qrs', obj); jsons.textContent=txt; document.getElementById('qr-section').style.display='block';
 };

@@ -82,10 +82,8 @@ footer{ margin-top:auto; padding:22px 0 30px; }
 .note{ color:var(--text-dim); font-style:italic; font-size:0.98rem; }
 .center{ text-align:center; }
 
-/* Route Draw layout */
-.draw-wrap{ width:min(900px,95vw); margin:0 auto; display:flex; flex-direction:column; gap:12px; }
-.draw-toolbar{ display:flex; flex-wrap:wrap; gap:10px; justify-content:center; align-items:center; }
-.canvas-frame{ background:#0b1224; border:1px solid rgba(255,255,255,.15); border-radius:14px; padding:8px; display:flex; justify-content:center; }
-.canvas-inner{ width:min(820px,88vw); height:min(68vh,64svh); display:flex; justify-content:center; align-items:center; background:#060c1a; border-radius:10px; overflow:hidden; }
-canvas.drawing{ background:#000; max-width:100%; max-height:100%; object-fit:contain; }
-.slider{ width:180px; }
+/* Draw fullscreen */
+.fullscreen-wrap{ position:fixed; inset:0; background:#000; z-index:9999; display:flex; flex-direction:column; }
+.fs-toolbar{ display:flex; gap:10px; align-items:center; justify-content:center; flex-wrap:wrap; padding:10px; background:rgba(17,24,39,.92); color:#e5e7eb; }
+.fs-canvas{ flex:1; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+.fs-canvas canvas{ width:100%; height:100%; max-height:100%; touch-action:none; background:#000; }

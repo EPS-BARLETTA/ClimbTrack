@@ -1,66 +1,84 @@
 <!doctype html><html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ClimbTrack — Dessiner la voie</title><link rel="stylesheet" href="style.css"></head>
-<body><div class="main-wrap"><div class="container">
-  <div class="headerbar"><div class="logo">🛠️ <span class="highlight">Dessiner la voie</span></div>
-    <div class="right"><a class="btn green big" href="menu.html">🏠 Menu</a></div></div>
-  <div class="card"><h2>Étape 2 — Éditer</h2><p class="lead">La photo est centrée, tu peux zoomer et dessiner.</p>
-    <div class="draw-wrap">
-      <div class="draw-toolbar">
-        <label>Outil
-          <select id="tool">
-            <option value="pen">✏️ Écriture au doigt</option>
-            <option value="circle">⭕ Cercle</option>
-            <option value="erase">🧼 Gomme (dernier)</option>
-            <option value="clear">🧹 Tout effacer</option>
-          </select>
-        </label>
-        <label>Épaisseur / Rayon <input id="size" type="range" min="6" max="48" value="16" class="slider"></label>
-        <label>Couleur
-          <select id="color">
-            <option value="#22c55e">Vert</option><option value="#3b82f6">Bleu</option><option value="#ef4444">Rouge</option>
-            <option value="#fde047">Jaune</option><option value="#e5e7eb">Blanc</option>
-          </select>
-        </label>
-        <label>Zoom <input id="zoom" type="range" min="50" max="200" value="100" class="slider"></label>
-        <button class="btn amber" id="fit">🧩 Ajuster</button>
-        <button class="btn blue" id="save">💾 Sauvegarder (PNG)</button>
-      </div>
-      <div class="canvas-frame">
-        <div class="canvas-inner"><canvas id="canvas" class="drawing"></canvas></div>
-      </div>
-    </div>
-  </div></div>
-  <footer><div class="container"><div class="footer-inner"></div></div></footer>
+<title>ClimbTrack — Dessiner (plein écran)</title><link rel="stylesheet" href="style.css"></head>
+<body style="margin:0;">
+<div class="fullscreen-wrap">
+  <div class="fs-toolbar">
+    <strong>✏️ Éditer la voie</strong>
+    <label>Outil
+      <select id="tool">
+        <option value="pen">Écriture au doigt</option>
+        <option value="circle">Cercle</option>
+        <option value="erase">Gomme (dernier)</option>
+        <option value="clear">Tout effacer</option>
+      </select>
+    </label>
+    <label>Épaisseur/Rayon <input id="size" type="range" min="6" max="48" value="16" class="slider"></label>
+    <label>Couleur
+      <select id="color">
+        <option value="#22c55e">Vert</option>
+        <option value="#3b82f6">Bleu</option>
+        <option value="#ef4444">Rouge</option>
+        <option value="#fde047">Jaune</option>
+        <option value="#e5e7eb">Blanc</option>
+      </select>
+    </label>
+    <label>Zoom <input id="zoom" type="range" min="50" max="200" value="100" class="slider"></label>
+    <button class="btn amber" id="fit">Ajuster</button>
+    <button class="btn blue" id="save">Sauvegarder (PNG)</button>
+    <a class="btn green" href="menu.html">Terminer</a>
+  </div>
+  <div class="fs-canvas">
+    <canvas id="canvas"></canvas>
+  </div>
+</div>
+
 <script type="module">
-import {getRouteImage, renderFooter} from './app.js';
-renderFooter();
-const dataURL=getRouteImage(); if(!dataURL){ alert('Pas de photo. Reviens à la capture.'); location.href='route-capture.html'; }
+import {getRouteImage} from './app.js';
+const dataURL = getRouteImage();
+if(!dataURL){ alert('Pas de photo. Reviens à la capture.'); location.href='route-capture.html'; }
+
 const canvas=document.getElementById('canvas'); const ctx=canvas.getContext('2d');
-const img=new Image(); let scale=1, fitScale=1; const circles=[], strokes=[]; let drawing=false, currentStroke=null;
-function fit(){ const maxW = Math.min(820, window.innerWidth*0.88), maxH = Math.min(window.innerHeight*0.64, 640);
-  const ratio = img.width/img.height; let w=maxW, h=w/ratio; if(h>maxH){ h=maxH; w=h*ratio; }
-  const dpr=window.devicePixelRatio||1; canvas.width = Math.round(w*dpr); canvas.height = Math.round(h*dpr); canvas.style.width=w+'px'; canvas.style.height=h+'px'; ctx.setTransform(dpr,0,0,dpr,0,0); fitScale = w/img.width; scale = fitScale * (zoom.value/100); draw(); }
+const tool=document.getElementById('tool'); const size=document.getElementById('size'); const color=document.getElementById('color');
+const zoom=document.getElementById('zoom'); const fitBtn=document.getElementById('fit'); const saveBtn=document.getElementById('save');
+
+const img=new Image(); let scale=1, fitScale=1; const strokes=[], circles=[]; let drawing=false, currentStroke=null;
+
+function resizeCanvas(){ const dpr=window.devicePixelRatio||1; const w=window.innerWidth, h=window.innerHeight-68; canvas.width=Math.round(w*dpr); canvas.height=Math.round(h*dpr);
+  canvas.style.width=w+'px'; canvas.style.height=h+'px'; ctx.setTransform(dpr,0,0,dpr,0,0); draw(); }
+
+function fit(){ if(!img.width) return; const maxW=window.innerWidth, maxH=window.innerHeight-68; const ratio=img.width/img.height;
+  let w=maxW, h=w/ratio; if(h>maxH){ h=maxH; w=h*ratio; } fitScale=w/img.width; scale=fitScale*(zoom.value/100); draw(); }
+
 function draw(){ ctx.clearRect(0,0,canvas.width,canvas.height); const w=img.width*scale, h=img.height*scale; const cx=(canvas.width-w)/2, cy=(canvas.height-h)/2; ctx.drawImage(img, cx, cy, w, h);
   strokes.forEach(s=>{ ctx.beginPath(); s.pts.forEach((p,i)=>{ const x=cx+p.x*scale, y=cy+p.y*scale; if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); }); ctx.lineWidth=s.w; ctx.strokeStyle=s.color; ctx.globalAlpha=0.95; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.stroke(); ctx.globalAlpha=1; });
   circles.forEach(c=>{ ctx.beginPath(); ctx.arc(cx+c.x*scale, cy+c.y*scale, c.r, 0, Math.PI*2); ctx.lineWidth=3; ctx.strokeStyle=c.color; ctx.globalAlpha=0.95; ctx.stroke(); ctx.globalAlpha=1; });
 }
-function pt(evt){ const r=canvas.getBoundingClientRect(); const x=(evt.touches?evt.touches[0].clientX:evt.clientX)-r.left; const y=(evt.touches?evt.touches[0].clientY:evt.clientY)-r.top;
-  const cx=(canvas.width - img.width*scale)/2, cy=(canvas.height - img.height*scale)/2; return { x:(x-cx)/scale, y:(y-cy)/scale }; }
+
+function toLocal(evt){ const r=canvas.getBoundingClientRect(); const px=(evt.touches?evt.touches[0].clientX:evt.clientX)-r.left; const py=(evt.touches?evt.touches[0].clientY:evt.clientY)-r.top;
+  const w=img.width*scale, h=img.height*scale; const cx=(canvas.clientWidth-w)/2, cy=(canvas.clientHeight-h)/2;
+  return { x:(px-cx)/scale, y:(py-cy)/scale };
+}
+
 canvas.addEventListener('mousedown',start,{passive:false}); canvas.addEventListener('touchstart',start,{passive:false});
-canvas.addEventListener('mousemove',move,{passive:false});  canvas.addEventListener('touchmove',move,{passive:false});
+canvas.addEventListener('mousemove',move,{passive:false}); canvas.addEventListener('touchmove',move,{passive:false});
 window.addEventListener('mouseup',end); window.addEventListener('touchend',end);
-function start(e){ e.preventDefault(); const tool=toolSelect.value; if(tool==='pen'){ drawing=true; const p=pt(e); currentStroke={color:color.value,w:+size.value,pts:[p]}; strokes.push(currentStroke); draw(); }
-  else if(tool==='circle'){ const p=pt(e); circles.push({x:p.x,y:p.y,r:+size.value,color:color.value}); draw(); }
-  else if(tool==='erase'){ if(strokes.length) strokes.pop(); else if(circles.length) circles.pop(); draw(); }
-  else if(tool==='clear'){ if(confirm('Tout effacer ?')){ strokes.length=0; circles.length=0; draw(); } } }
-function move(e){ if(!drawing) return; const p=pt(e); currentStroke.pts.push(p); draw(); }
+
+function start(e){ e.preventDefault(); const t=tool.value;
+  if(t==='pen'){ drawing=true; const p=toLocal(e); currentStroke={color:color.value,w:+size.value,pts:[p]}; strokes.push(currentStroke); draw(); }
+  else if(t==='circle'){ const p=toLocal(e); circles.push({x:p.x,y:p.y,r:+size.value,color:color.value}); draw(); }
+  else if(t==='erase'){ if(strokes.length) strokes.pop(); else if(circles.length) circles.pop(); draw(); }
+  else if(t==='clear'){ if(confirm('Tout effacer ?')){ strokes.length=0; circles.length=0; draw(); } }
+}
+function move(e){ if(!drawing) return; const p=toLocal(e); currentStroke.pts.push(p); draw(); }
 function end(){ drawing=false; currentStroke=null; }
-const toolSelect=document.getElementById('tool'), size=document.getElementById('size'), color=document.getElementById('color'), zoom=document.getElementById('zoom');
+
 zoom.addEventListener('input', ()=>{ scale = fitScale * (zoom.value/100); draw(); });
-document.getElementById('fit').onclick=()=>{ zoom.value=100; fit(); };
-document.getElementById('save').onclick=()=>{ const a=document.createElement('a'); a.download='climbtrack_voie.png'; a.href=canvas.toDataURL('image/png'); a.click(); };
-img.onload=()=>{ fit(); }; img.src=dataURL;
-window.addEventListener('resize', fit);
+fitBtn.onclick=fit;
+saveBtn.onclick=()=>{ const a=document.createElement('a'); a.download='climbtrack_voie.png'; a.href=canvas.toDataURL('image/png'); a.click(); };
+
+function init(){ resizeCanvas(); fit(); }
+window.addEventListener('resize', ()=>{ resizeCanvas(); fit(); });
+img.onload=init; img.src=dataURL;
 </script>
 </body></html>

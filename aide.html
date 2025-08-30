@@ -1,11 +1,31 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>ClimbTrack — Aide</title><link rel="stylesheet" href="style.css"></head>
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ClimbTrack — Aide</title><link rel="stylesheet" href="style.css"></head>
 <body><div class="main-wrap"><div class="container">
   <div class="headerbar"><div class="logo">❓ <span class="highlight">Aide ClimbTrack</span></div>
     <div class="right"><a class="btn green big" href="menu.html">🏠 Menu</a><a class="btn amber big" href="securite.html">🦺 Sécurité</a></div></div>
-  <div class="row row-3">
-    <div class="card"><h2>1) S’identifier</h2><p class="lead">Nom, Prénom, Classe → accès au menu.</p><div class="actions"><a class="btn blue big" href="identite.html">📝 Identification</a></div></div>
-    <div class="card"><h2>2) Choisir une pratique</h2><p class="lead">Bloc • Difficulté • Vitesse • Créateur • QR de séance</p><div class="actions"><a class="btn blue big" href="menu.html">🧭 Ouvrir le menu</a></div></div>
-    <div class="card"><h2>3) QR JSON</h2><p class="lead">Le QR est <strong>toujours</strong> un tableau JSON compatible ScanProf.</p></div>
+
+  <div class="card">
+    <h2>Ce que tu peux faire</h2>
+    <div class="row row-3">
+      <div class="card"><h3>🧱 Bloc</h3><p class="lead">Enregistrer tes réussites par couleurs (jaune → mauve). Numérote le bloc, ajoute-le, puis <strong>Enregistrer séance</strong>.</p></div>
+      <div class="card"><h3>🧗 Difficulté</h3><p class="lead">Renseigner <strong>cotation</strong> et <strong>relais (X)</strong>, style (moulinette / en tête / mouli-tête) puis <em>OK</em> ou <em>NT</em> avec motif.</p></div>
+      <div class="card"><h3>⚡ Vitesse</h3><p class="lead">Entrer tes temps manuellement ou utiliser le chrono intégré. On garde le <strong>meilleur temps</strong> dans le QR.</p></div>
+    </div>
+  </div>
+
+  <div class="row row-3" style="margin-top:12px;">
+    <div class="card"><h2>Guide élève — pas à pas</h2>
+      <ol>
+        <li>Va sur <strong>Démarrer</strong> et saisis <em>nom, prénom, classe</em>.</li>
+        <li>Dans <strong>Bloc</strong>, ajoute chaque bloc réussi → <em>Enregistrer séance</em>.</li>
+        <li>Dans <strong>Difficulté</strong>, saisis cotation + relais + style → choisis <em>Réussie</em> ✅ ou <em>Essayée</em> ❌ + motif → <em>Enregistrer séance</em>.</li>
+        <li>Dans <strong>Vitesse</strong>, ajoute tes essais → le <strong>meilleur</strong> sera gardé → <em>Enregistrer séance</em>.</li>
+        <li>Enfin, ouvre <strong>QR de ma séance</strong> et fais scanner le <strong>seul QR</strong> par le prof.</li>
+      </ol>
+    </div>
+    <div class="card"><h2>Créateur de voie</h2><p class="lead">Prends une photo du mur (ou importe), puis dessine <em>plein écran</em> : écriture au doigt, cercles, gomme. Sauvegarde le PNG en souvenir.</p>
+    <div class="actions"><a class="btn edit big" href="route-capture.html">📷 Démarrer</a></div></div>
+    <div class="card"><h2>QR JSON et ScanProf</h2><p class="lead">Le QR est un <strong>tableau JSON</strong> avec les champs <em>nom, prenom, classe</em>, puis tes résultats. Compatible ScanProf.</p></div>
   </div>
 </div><footer><div class="container"><div class="footer-inner"></div></div></footer>
 <script type="module">import {renderFooter} from './app.js'; renderFooter();</script>
