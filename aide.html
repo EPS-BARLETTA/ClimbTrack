@@ -49,7 +49,29 @@
     <a class="btn" href="route-gallery.html">🗂️ Mes voies</a>
   </div>
 </div>
-    <div class="card"><h2>QR JSON et ScanProf</h2><p class="lead">Le QR est un <strong>tableau JSON</strong> avec les champs <em>nom, prenom, classe</em>, puis tes résultats. Compatible ScanProf.</p></div>
+    <div class="card">
+  <h2>QR code & ScanProf — comment ça marche ?</h2>
+  <div class="row row-3">
+    <div class="card">
+      <h3>QR code de spécialité</h3>
+      <p class="lead">Depuis <strong>Bloc</strong>, <strong>Difficulté</strong> ou <strong>Vitesse</strong>, le bouton <em>QR code …</em> génère un QR avec <em>uniquement</em> les résultats de cette spécialité.</p>
+      <p class="small">Utile si l’enseignant veut scanner juste une partie de la séance.</p>
+    </div>
+    <div class="card">
+      <h3>QR code de séance (global)</h3>
+      <p class="lead">Depuis <strong>QR de ma séance</strong>, un <em>seul QR code</em> regroupe tout : Bloc + Difficulté + Vitesse.</p>
+      <p class="small">C’est celui à faire scanner en fin de séance.</p>
+    </div>
+    <div class="card">
+      <h3>Enregistrer sa séance</h3>
+      <ol style="text-align:left">
+        <li>Dans chaque spécialité, saisis tes résultats puis appuie sur <strong>Enregistrer séance</strong> (ça stocke en local sur l’appareil).</li>
+        <li>Quand tu as fini, ouvre <strong>QR de ma séance</strong> et affiche le QR code global.</li>
+        <li>Le professeur scanne ce QR dans <em>ScanProf</em> : il récupère <strong>nom, prénom, classe</strong> + toutes les données.</li>
+      </ol>
+    </div>
+  </div>
+</div>
   </div>
 </div><footer><div class="container"><div class="footer-inner"></div></div></footer>
 <script type="module">import {renderFooter} from './app.js'; renderFooter();</script>
