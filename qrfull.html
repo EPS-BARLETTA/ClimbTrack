@@ -1,0 +1,37 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ClimbTrack — QR plein écran</title>
+<style>
+  html,body{margin:0; height:100%; background:#fff; color:#000; font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;}
+  .wrap{height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px;}
+  .qr{ background:#fff; padding:18px; border-radius:12px; }
+  .bar{ position:fixed; top:10px; left:10px; right:10px; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+  .btn{ border:1px solid #ddd; padding:10px 14px; border-radius:10px; background:#f7f7f7; font-weight:700; text-decoration:none; color:#111; }
+  .note{ color:#444; font-size:14px; }
+</style>
+</head>
+<body>
+<div class="bar">
+  <a class="btn" href="javascript:history.back()">← Retour</a>
+  <div class="note">Conseil : monte la luminosité de l’écran pour faciliter le scan.</div>
+</div>
+<div class="wrap">
+  <div id="qr" class="qr"></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+  (function(){
+    try{
+      const txt = sessionStorage.getItem('ct_last_qr_text') || '';
+      if(!txt){ document.body.innerHTML += '<p style="text-align:center">Aucun QR en mémoire. Retourne sur la page précédente pour le générer.</p>'; return; }
+      // Parse and build back object to use the same maker
+      const arr = JSON.parse(txt);
+      const obj = arr && arr[0] ? arr[0] : null;
+      if(!obj){ throw new Error('QR vide'); }
+      new QRCode(document.getElementById('qr'), { text: JSON.stringify([obj]), width: Math.min(window.innerWidth, window.innerHeight)*0.8, height: Math.min(window.innerWidth, window.innerHeight)*0.8, correctLevel: QRCode.CorrectLevel.H });
+    }catch(e){
+      document.body.innerHTML += '<p style="text-align:center">Erreur : ' + (e.message||e) + '</p>';
+    }
+  })();
+</script>
+</body></html>

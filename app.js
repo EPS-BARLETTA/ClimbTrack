@@ -31,9 +31,9 @@ export function saveRouteToGallery(dataURL){
   arr.unshift(rec);
   localStorage.setItem(CT_ROUTE_GALLERY, JSON.stringify(arr));
 }
-export function getRouteGallery(){
-  try{ return JSON.parse(localStorage.getItem(CT_ROUTE_GALLERY)||'[]'); }catch(e){ return []; }
-}
-export function deleteRouteFromGallery(id){
-  let arr=getRouteGallery(); arr = arr.filter(x=>x.id!==id); localStorage.setItem(CT_ROUTE_GALLERY, JSON.stringify(arr));
-}
+export function getRouteGallery(){ try{ return JSON.parse(localStorage.getItem(CT_ROUTE_GALLERY)||'[]'); }catch(e){ return []; } }
+export function deleteRouteFromGallery(id){ let arr=getRouteGallery(); arr = arr.filter(x=>x.id!==id); localStorage.setItem(CT_ROUTE_GALLERY, JSON.stringify(arr)); }
+
+const CT_LAST_QR='ct_last_qr_text';
+export function setLastQRText(t){ try{ sessionStorage.setItem(CT_LAST_QR, t);}catch(e){} }
+export function getLastQRText(){ try{ return sessionStorage.getItem(CT_LAST_QR)||'';}catch(e){ return ''; } }

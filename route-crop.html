@@ -55,7 +55,7 @@ let pinchBaseDist=0, pinchBaseScale=1, lastMid=null;
 
 function resize(){ const dpr=window.devicePixelRatio||1; const rect=canvas.getBoundingClientRect(); canvas.width=Math.round(rect.width*dpr); canvas.height=Math.round(rect.height*dpr);
   ctx.setTransform(dpr,0,0,dpr,0,0); draw(); }
-const ro=new ResizeObserver(resize); ro.observe(document.querySelector('.stage'));
+const ro=new ResizeObserver(()=>resize()); ro.observe(document.querySelector('.stage'));
 
 function fit(){ if(!img.naturalWidth) return; const rect=canvas.getBoundingClientRect(); const iw=img.naturalWidth, ih=img.naturalHeight; const ar=iw/ih;
   let w=rect.width, h=w/ar; if(h>rect.height){ h=rect.height; w=h*ar; } fitScale=w/iw; scale=fitScale*(zoom.value/100); dx=0; dy=0; draw(); }
@@ -77,12 +77,16 @@ function screenToImage(px,py){ const rect=canvas.getBoundingClientRect(); const 
   const a=-angle*Math.PI/180; const cos=Math.cos(a), sin=Math.sin(a); const rx = x*cos - y*sin; const ry = x*sin + y*cos;
   const ix = rx/scale + img.naturalWidth/2; const iy = ry/scale + img.naturalHeight/2; return {x:ix, y:iy}; }
 
-function pointerDown(px,py){ if(tool.value==='erase'){ if(strokes.length) strokes.pop(); else if(circles.length) circles.pop(); draw(); return; }
+function insideImage(px,py){ const p=screenToImage(px,py); return !(p.x<0||p.y<0||p.x>img.naturalWidth||p.y>img.naturalHeight); }
+
+function pointerDown(px,py){
+  if(!insideImage(px,py)) return;
+  if(tool.value==='erase'){ if(strokes.length) strokes.pop(); else if(circles.length) circles.pop(); draw(); return; }
   if(tool.value==='clear'){ if(confirm('Tout effacer ?')){ strokes=[]; circles=[]; draw(); } return; }
   if(tool.value==='circle'){ const p=screenToImage(px,py); circles.push({x:p.x, y:p.y, r: +size.value, color: color.value}); draw(); return; }
   const p=screenToImage(px,py); currentStroke={w:+size.value, color:color.value, pts:[p]}; strokes.push(currentStroke); drawing=true; draw();
 }
-function pointerMove(px,py){ if(!drawing) return; const p=screenToImage(px,py); currentStroke.pts.push(p); draw(); }
+function pointerMove(px,py){ if(!drawing) return; if(!insideImage(px,py)) return; const p=screenToImage(px,py); currentStroke.pts.push(p); draw(); }
 function pointerUp(){ drawing=false; currentStroke=null; }
 
 let mouseDown=false;
@@ -105,14 +109,50 @@ zoom.addEventListener('input', ()=>{ scale = fitScale*(zoom.value/100); draw(); 
 fitBtn.onclick=fit;
 rotBtn.onclick=()=>{ angle=(angle+90)%360; draw(); };
 
-function exportCanvas(){ const rect=canvas.getBoundingClientRect(); const c=document.createElement('canvas'); c.width=rect.width; c.height=rect.height; const cctx=c.getContext('2d');
-  cctx.save(); const cx=rect.width/2, cy=rect.height/2;
+function exportCanvas(){
+  const rect=canvas.getBoundingClientRect();
+  const c=document.createElement('canvas'); c.width=rect.width; c.height=rect.height;
+  const cctx=c.getContext('2d');
+  // draw image with same transform as screen
+  cctx.save();
+  const cx=rect.width/2, cy=rect.height/2;
   cctx.translate(cx+dx, cy+dy); cctx.rotate(angle*Math.PI/180); cctx.scale(scale, scale); cctx.translate(-img.naturalWidth/2, -img.naturalHeight/2);
   cctx.drawImage(img,0,0);
-  cctx.lineCap='round'; cctx.lineJoin='round';
-  for(const s of strokes){ cctx.beginPath(); for(let i=0;i<s.pts.length;i++){ const p=s.pts[i]; const x=p.x, y=p.y; if(i===0) cctx.moveTo(x,y); else cctx.lineTo(x,y); } cctx.lineWidth = s.w; cctx.strokeStyle=s.color; cctx.globalAlpha=0.95; cctx.stroke(); cctx.globalAlpha=1; }
-  for(const c0 of circles){ cctx.beginPath(); cctx.arc(c0.x, c0.y, c0.r, 0, Math.PI*2); cctx.lineWidth=3; cctx.strokeStyle=c0.color; cctx.globalAlpha=0.95; cctx.stroke(); cctx.globalAlpha=1; }
-  cctx.restore(); return c.toDataURL('image/png'); }
+  cctx.restore();
+
+  // helper: image -> screen coords
+  const th = angle*Math.PI/180; const cos=Math.cos(th), sin=Math.sin(th);
+  function imgToScreen(ix,iy){
+    const rx=(ix - img.naturalWidth/2)*scale; const ry=(iy - img.naturalHeight/2)*scale;
+    const sx = (rx*cos - ry*sin) + (rect.width/2 + dx);
+    const sy = (rx*sin + ry*cos) + (rect.height/2 + dy);
+    return {x:sx, y:sy};
+  }
+
+  // draw strokes in screen space
+  cctx.lineCap='round'; cctx.lineJoin='round'; cctx.globalAlpha=0.95;
+  for(const s of strokes){
+    cctx.beginPath();
+    for(let i=0;i<s.pts.length;i++){
+      const p=s.pts[i]; const sc=imgToScreen(p.x,p.y);
+      if(i===0) cctx.moveTo(sc.x, sc.y); else cctx.lineTo(sc.x, sc.y);
+    }
+    cctx.lineWidth = s.w;
+    cctx.strokeStyle = s.color;
+    cctx.stroke();
+  }
+  // draw circles in screen space
+  for(const c0 of circles){
+    const sc=imgToScreen(c0.x, c0.y);
+    cctx.beginPath();
+    cctx.arc(sc.x, sc.y, c0.r, 0, Math.PI*2);
+    cctx.lineWidth=3;
+    cctx.strokeStyle=c0.color;
+    cctx.stroke();
+  }
+  cctx.globalAlpha=1;
+  return c.toDataURL('image/png');
+}
 saveBtn.onclick=()=>{ const data=exportCanvas(); const a=document.createElement('a'); a.download='climbtrack_voie.png'; a.href=data; a.click(); };
 saveLocal.onclick=()=>{ const data=exportCanvas(); saveRouteToGallery(data); alert('Voie sauvegardée dans l\'app ✅'); };
 

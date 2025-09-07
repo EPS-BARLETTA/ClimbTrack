@@ -8,14 +8,29 @@
     <label>Cotation<input id="d_cotation" placeholder="Ex. 5c, 6a+"></label>
     <label>Relais atteint (X)<input id="d_relais" type="number" min="0" max="40" placeholder="Ex. 5"></label>
     <label>Style<select id="d_style"><option value="moulinette">Moulinette</option><option value="en_tete">En tête</option><option value="mouli_tete">Mouli-tête</option></select></label>
-    <label>Résultat<select id="d_resultat"><option value="reussie">Réussie</option><option value="non_terminee">Essayée mais non terminée</option></select></label>
+    <label>Résultat
+      <select id="d_resultat">
+        <option value="e1">Voie enchaînée (1er essai)</option>
+        <option value="e2">Enchaînée en 2e essai</option>
+        <option value="ne">Pas enchaînée</option>
+      </select>
+    </label>
     <div id="motifs" style="display:none;">
-      <label>Motif<select id="d_motif"><option value="chute_degaine">Chute à la dégaine (préciser X)</option><option value="autre_prise">Autre prise (préciser nb)</option><option value="fatigue">Fatigue</option><option value="peur">Peur</option><option value="technique">Difficulté technique</option></select></label>
-      <div id="motif_deg" style="display:none;"><label>Dégaine X<input id="d_degx" type="number" min="0" max="40" placeholder="Ex. 5"></label></div>
-      <div id="motif_nb" style="display:none;"><label>Nb. de prises <input id="d_nbprise" type="number" min="1" max="20" placeholder="Ex. 2"></label></div>
+      <div class="row row-3">
+        <div class="card" id="m_deg" style="text-align:left;">
+          <label>Dégaine (numéro)<input id="d_degx" type="number" min="0" max="40" placeholder="Ex. 4"></label>
+        </div>
+        <div class="card" id="m_mc" style="text-align:left;">
+          <label>Prises en plus (multi-couleur)<input id="d_nbprise" type="number" min="0" max="20" placeholder="Ex. 2"></label>
+        </div>
+        <div class="card" id="m_td" style="text-align:left;">
+          <label><input type="checkbox" id="d_td"> Trop difficile</label>
+        </div>
+      </div>
+      <p class="small">Codes générés : <strong>NEDx</strong> (dégaine x), <strong>MCx</strong> (prises en plus), <strong>TD</strong> (trop difficile).</p>
     </div>
     <div class="actions"><button class="btn blue big" id="btn_add">➕ Ajouter</button><button class="btn red big" id="btn_clear">♻️ Vider</button></div>
-    <table class="table" id="d_table"><thead><tr><th>#</th><th>Cotation</th><th>Relais</th><th>Style</th><th>Résultat</th><th>Motif</th><th>Action</th></tr></thead><tbody></tbody></table>
+    <table class="table" id="d_table"><thead><tr><th>#</th><th>Cotation</th><th>Relais</th><th>Style</th><th>Résultat</th><th>Détails</th><th>Action</th></tr></thead><tbody></tbody></table>
     <div class="actions"><button class="btn green big" id="btn_save">💾 Enregistrer séance</button><button class="btn green big" id="btn_qr">📷 QR code Difficulté</button><a class="btn" href="seance.html">➡️ QR de séance</a></div>
     <div id="qr-section" style="display:none;margin-top:16px;"><h3>📷 QR code prêt</h3><div class="qr-wrap"><div class="qr-box" id="qrd"></div><pre class="pre" id="jsond"></pre></div></div>
   </div></div>
@@ -27,30 +42,39 @@ renderFooter(); ensureIdentite();
 const id = getIdentite();
 document.getElementById('idline').innerHTML = `Élève : <strong>${id.prenom} ${id.nom}</strong> — <span class='badge'>Classe : ${id.classe}</span>`;
 
-function motifCode(m){
-  if(!m) return '';
-  if(m.startsWith('degX')) return 'D'+m.replace('degX',''); // D + numéro
-  if(m.startsWith('autre_prise:n')) return 'AP'+m.replace('autre_prise:n',''); // AP + nb
-  if(m==='fatigue') return 'F';
-  if(m==='peur') return 'P';
-  if(m==='technique') return 'D'; // difficulté technique (code D)
-  return '';
-}
 function styleCode(sty){ if(sty==='moulinette') return 'M'; if(sty==='en_tete') return 'T'; if(sty==='mouli_tete') return 'MT'; return ''; }
+function motifCodeNE({degx, nbprise, td}){
+  const parts=[]; if(degx && degx>0) parts.push('NED'+degx); if(nbprise && nbprise>0) parts.push('MC'+nbprise); if(td) parts.push('TD'); return parts.join(' ');
+}
 
 const tbody=document.querySelector('#d_table tbody'); const list=[];
-const dres=document.getElementById('d_resultat'), motifs=document.getElementById('motifs'), motifSel=document.getElementById('d_motif');
-const motif_deg=document.getElementById('motif_deg'), motif_nb=document.getElementById('motif_nb');
-function updateMotifFields(){ const m=motifSel.value; motif_deg.style.display=(m==='chute_degaine')?'block':'none'; motif_nb.style.display=(m==='autre_prise')?'block':'none'; }
-dres.addEventListener('change', ()=>{ motifs.style.display = (dres.value==='non_terminee') ? 'block' : 'none'; updateMotifFields(); });
-motifSel.addEventListener('change', updateMotifFields);
-function render(){ tbody.innerHTML=''; list.forEach((it,i)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${i+1}</td><td>${it.cotation}</td><td>${it.relais}</td><td>${it.style}</td><td>${it.resultat}</td><td>${it.motif||''}</td><td><button class="btn red" data-i="${i}">Supprimer</button></td>`; tbody.appendChild(tr); });
-  tbody.querySelectorAll('button[data-i]').forEach(btn=>btn.addEventListener('click', e=>{ list.splice(+e.currentTarget.dataset.i,1); render(); })); }
-function motifToTxt(m,degx,nbp){ if(m==='chute_degaine') return 'degX'+(degx||'?'); if(m==='autre_prise') return 'autre_prise:n'+(nbp||'?'); if(m==='fatigue') return 'fatigue'; if(m==='peur') return 'peur'; if(m==='technique') return 'technique'; return ''; }
+const dres=document.getElementById('d_resultat'), motifs=document.getElementById('motifs');
+dres.addEventListener('change', ()=>{ motifs.style.display = (dres.value==='ne') ? 'block' : 'none'; });
+
+function render(){
+  tbody.innerHTML='';
+  list.forEach((it,i)=>{
+    let resTxt = (it.res==='e1')?'Enchaînée (1er)':(it.res==='e2'?'Enchaînée (2e)':'Non enchaînée');
+    let details = '';
+    if(it.res==='ne'){
+      const parts=[]; if(it.degx>0) parts.push('Dégaine '+it.degx); if(it.nbprise>0) parts.push('MC '+it.nbprise); if(it.td) parts.push('TD');
+      details = parts.join(' • ');
+    }
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${i+1}</td><td>${it.cotation}</td><td>${it.relais}</td><td>${it.style}</td><td>${resTxt}</td><td>${details}</td><td><button class="btn red" data-i="${i}">Supprimer</button></td>`;
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll('button[data-i]').forEach(btn=>btn.addEventListener('click', e=>{ list.splice(+e.currentTarget.dataset.i,1); render(); }));
+}
+
 document.getElementById('btn_add').onclick=()=>{
-  const cot=d_cotation.value.trim().toUpperCase(); const rel=parseInt(d_relais.value||'0',10); const sty=d_style.value; const res=d_resultat.value;
+  const cot=d_cotation.value.trim().toUpperCase();
+  const rel=parseInt(d_relais.value||'0',10);
+  const sty=d_style.value;
+  const res=d_resultat.value; // e1,e2,ne
   if(!cot){ alert('Saisir une cotation'); return; }
-  const it={cotation:cot, relais:rel, style:sty, resultat:(res==='reussie'?'OK':'NT'), motif:(res==='non_terminee'?motifToTxt(motifSel.value, parseInt(d_degx.value||'0',10), parseInt(d_nbprise.value||'0',10)):'')};
+  const it={cotation:cot, relais:rel, style:sty, res:res};
+  if(res==='ne'){ it.degx=parseInt(d_degx.value||'0',10); it.nbprise=parseInt(d_nbprise.value||'0',10); it.td=document.getElementById('d_td').checked; }
   list.push(it); render();
 };
 document.getElementById('btn_clear').onclick=()=>{ list.length=0; render(); };
@@ -58,7 +82,11 @@ document.getElementById('btn_save').onclick=()=>{ const s=loadSeance(); s.diffic
 document.getElementById('btn_qr').onclick=()=>{
   if(!list.length){ alert('Ajoute une réalisation'); return; }
   const obj={ nom:id.nom, prenom:id.prenom, classe:id.classe };
-  list.forEach((d,idx)=>{ const markAscii = d.resultat==='OK' ? 'OK' : ('NT ' + motifCode(d.motif)); const sc=styleCode(d.style); obj['difficulte_'+(idx+1)] = `${d.cotation} R${d.relais} ${sc} ${markAscii}`; });
+  list.forEach((d,idx)=>{
+    const sc=styleCode(d.style);
+    let code=''; if(d.res==='e1') code='E'; else if(d.res==='e2') code='E2'; else { const ne = motifCodeNE({degx:d.degx, nbprise:d.nbprise, td:d.td}); code = 'NE' + (ne?(' '+ne):''); }
+    obj['difficulte_'+(idx+1)] = `${sc} R${d.relais} ${d.cotation} ${code}`;
+  });
   const txt=makeQR('qrd', obj); jsond.textContent=txt; document.getElementById('qr-section').style.display='block';
 };
 </script></body></html>

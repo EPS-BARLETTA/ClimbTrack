@@ -20,6 +20,11 @@
       <p class="note">Ordre des champs : <strong>nom, prenom, classe, bloc_*, difficulte_*, vitesse</strong></p>
       <div id="qr-section" style="display:none;margin-top:12px;">
         <div class="qr-wrap"><div class="qr-box" id="qrs"></div></div>
+        <div class="actions" style="justify-content:center;gap:10px;margin-top:8px;">
+          <span class="badge" id="bytes">0 octets (H)</span>
+          <button class="btn blue" id="fullscreen">🖥️ Plein écran</button>
+          <button class="btn" id="toggleLevel">Basculer H↔Q</button>
+        </div>
         <pre class="pre" id="jsons"></pre>
       </div>
     </div>
@@ -27,40 +32,61 @@
   <footer><div class="container"><div class="footer-inner"></div></div></footer>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script type="module">
-import {getIdentite, ensureIdentite, renderFooter, makeQR, loadSeance} from './app.js';
+import {getIdentite, ensureIdentite, renderFooter, makeQR, loadSeance, setLastQRText} from './app.js';
 renderFooter(); ensureIdentite(); const id=getIdentite(); document.getElementById('idline').innerHTML=`Élève : <strong>${id.prenom} ${id.nom}</strong> — <span class='badge'>Classe : ${id.classe}</span>`;
 
-function motifCode(m){
-  if(!m) return '';
-  if(m.startsWith('degX')) return 'D'+m.replace('degX',''); // D + numéro
-  if(m.startsWith('autre_prise:n')) return 'AP'+m.replace('autre_prise:n',''); // AP + nb
-  if(m==='fatigue') return 'F';
-  if(m==='peur') return 'P';
-  if(m==='technique') return 'D'; // difficulté technique (code D)
-  return '';
-}
 function styleCode(sty){ if(sty==='moulinette') return 'M'; if(sty==='en_tete') return 'T'; if(sty==='mouli_tete') return 'MT'; return ''; }
+function motifCodeNE({degx, nbprise, td}){ const parts=[]; if(degx && degx>0) parts.push('NED'+degx); if(nbprise && nbprise>0) parts.push('MC'+nbprise); if(td) parts.push('TD'); return parts.join(' '); }
 
 function render(){ const s=loadSeance();
-  const vTxt=(s.vitesse&&s.vitesse.best)?`Best=${s.vitesse.best} • NbEssais=${s.vitesse.nb}`:'—';
-  vzone.textContent=vTxt;
+  const vTxt=(s.vitesse&&s.vitesse.best)?`Best=${s.vitesse.best} • NbEssais=${s.vitesse.nb}`:'—'; vzone.textContent=vTxt;
   dzone.textContent=(s.difficulte&&s.difficulte.length)?s.difficulte.map((x,i)=>{
-    const mark = x.resultat==='OK' ? '✅' : ('❌ ' + motifCode(x.motif));
-    return `D${i+1}:${x.cotation} R${x.relais} [${styleCode(x.style)}] ${mark}`;
+    let code = (x.res==='e1')?'E':(x.res==='e2'?'E2':'NE');
+    if(x.res==='ne'){ const more = motifCodeNE({degx:x.degx, nbprise:x.nbprise, td:x.td}); if(more) code += ' '+more; }
+    return `D${i+1}:[${styleCode(x.style)}] R${x.relais} ${x.cotation} — ${code}`;
   }).join('  |  '):'—';
   bzone.textContent=(s.bloc&&s.bloc.length)?s.bloc.map((x,i)=>`B${i+1}:${x.c} R${x.n}`).join('  |  '):'—';
 } render();
 
+
 document.getElementById('btn_qr').onclick=()=>{
   const s=loadSeance();
-  const obj={ nom:id.nom, prenom:id.prenom, classe:id.classe };
-  if(s.bloc && s.bloc.length){ s.bloc.forEach((b,idx)=>{ obj['bloc_'+(idx+1)] = `${b.c} R${b.n}`; }); }
-  if(s.difficulte && s.difficulte.length){ s.difficulte.forEach((d,idx)=>{
-    const markAscii = d.resultat==='OK' ? 'OK' : ('NT ' + motifCode(d.motif));
-    const sc=styleCode(d.style);
-    obj['difficulte_'+(idx+1)] = `${d.cotation} R${d.relais} ${sc} ${markAscii}`;
-  }); }
-  if(s.vitesse && s.vitesse.best){ obj.vitesse = s.vitesse.best; }
-  const txt=makeQR('qrs', obj); jsons.textContent=txt; document.getElementById('qr-section').style.display='block';
+  const baseObj={ nom:id.nom, prenom:id.prenom, classe:id.classe };
+  const buildObj=()=>{
+    const obj={...baseObj};
+    if(s.bloc && s.bloc.length){ s.bloc.forEach((b,idx)=>{ obj['bloc_'+(idx+1)] = `${b.c} R${b.n}`; }); }
+    if(s.difficulte && s.difficulte.length){
+      s.difficulte.forEach((d,idx)=>{
+        const sc= (d.style==='moulinette')?'M':(d.style==='en_tete'?'T':'MT');
+        let code=''; if(d.res==='e1') code='E'; else if(d.res==='e2') code='E2'; else {
+          const parts=[]; if(d.degx && d.degx>0) parts.push('NED'+d.degx); if(d.nbprise && d.nbprise>0) parts.push('MC'+d.nbprise); if(d.td) parts.push('TD');
+          code='NE' + (parts.length?(' '+parts.join(' ')):''); }
+        obj['difficulte_'+(idx+1)] = `${sc} R${d.relais} ${d.cotation} ${code}`;
+      });
+    }
+    if(s.vitesse && s.vitesse.best){ obj.vitesse = s.vitesse.best; }
+    return obj;
+  };
+  const obj = buildObj();
+  const enc = new TextEncoder();
+  let level='H';
+  const txt = JSON.stringify([obj]);
+  const bytes = enc.encode(txt).length;
+  const warn = document.getElementById('bytes');
+  function render(levelNow){
+    const qrTxt = JSON.stringify([buildObj()]); // rebuild in case
+    document.getElementById('qrs').innerHTML='';
+    makeQR('qrs', JSON.parse(qrTxt)[0], levelNow);
+    jsons.textContent=qrTxt;
+    setLastQRText(qrTxt);
+    const bcount = enc.encode(qrTxt).length;
+    warn.textContent = bcount + ' octets (' + levelNow + ')';
+    if(levelNow==='H' && bcount>1100) { warn.textContent += ' • proche de la limite, Q recommandé'; }
+  }
+  render(level);
+  document.getElementById('qr-section').style.display='block';
+  document.getElementById('fullscreen').onclick=()=>{ location.href='qrfull.html'; };
+  document.getElementById('toggleLevel').onclick=()=>{ level = (level==='H'?'Q':'H'); render(level); };
 };
+    
 </script></body></html>
