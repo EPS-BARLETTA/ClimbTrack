@@ -22,6 +22,15 @@
     </div>
   </div></div>
   <footer><div class="container"><div class="footer-inner"></div></div></footer>
+
+  <!-- Toast discret d’enregistrement -->
+  <div id="autosave-toast" style="
+    position:fixed; left:50%; bottom:16px; transform:translate(-50%,12px);
+    background:#16a34a; color:#fff; padding:10px 14px; border-radius:12px;
+    font-weight:600; font-size:.95rem; box-shadow:0 6px 18px rgba(0,0,0,.2);
+    opacity:0; transition:opacity .25s ease, transform .25s ease; z-index:9999;
+  ">Séance enregistrée ✅</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script type="module">
 import {getIdentite, ensureIdentite, renderFooter, formatTime, parseTimeToCentis, loadSeance, saveSeance, makeQR} from './app.js';
@@ -33,6 +42,19 @@ const id=getIdentite();
 document.getElementById('idline').innerHTML = `Élève : <strong>${id.prenom} ${id.nom}</strong> — <span class='badge'>Classe : ${id.classe}</span>`;
 
 const runs=[], tbody=document.querySelector('#v_table tbody'), bestEl=document.getElementById('best'), nbEl=document.getElementById('nb');
+
+// Toast helper
+function showToast(msg='Séance enregistrée ✅'){
+  const t = document.getElementById('autosave-toast');
+  t.textContent = msg;
+  t.style.opacity = '1';
+  t.style.transform = 'translate(-50%, 0)';
+  clearTimeout(t._hide);
+  t._hide = setTimeout(()=>{
+    t.style.opacity = '0';
+    t.style.transform = 'translate(-50%, 12px)';
+  }, 1500);
+}
 
 function render(){ 
   tbody.innerHTML=''; 
@@ -48,14 +70,13 @@ function render(){
     btn.addEventListener('click', e=>{
       runs.splice(+e.currentTarget.dataset.i,1); 
       render();
-      debouncedAutoSave(); // autosave après suppression
+      debouncedAutoSave(); 
     });
   });
   bestEl.textContent=best?best.txt:'—'; 
   nbEl.textContent=runs.length;
 }
 
-// --- Calcul best & count inchangé
 function bestAndCount(){ 
   if(!runs.length) return {best:null,count:0}; 
   let best=runs[0], bv=parseTimeToCentis(best); 
@@ -66,18 +87,18 @@ function bestAndCount(){
   return {best, count:runs.length}; 
 }
 
-// --- Enregistrement (réutilise ta logique existante) ---
+// Enregistrement (réutilise ta logique) + toast
 function persistVitesse(silent=true){
   const bc = bestAndCount();
-  // Ne sauvegarde rien si aucun essai (évite d'écraser une séance existante avec vide)
-  if (!bc.count) return;
+  if (!bc.count) return; // pas d’écrasement à vide
   const s = loadSeance();
   s.vitesse = { essais: runs.slice(), best: bc.best, nb: bc.count };
   saveSeance(s);
+  showToast();                 // <-- feedback discret
   if (!silent) alert('Vitesse enregistrée ✅');
 }
 
-// --- Anti-rebond générique ---
+// Anti-rebond
 function debounce(fn, delay){
   let t;
   return (...args)=>{
@@ -87,70 +108,40 @@ function debounce(fn, delay){
 }
 const debouncedAutoSave = debounce(()=>persistVitesse(true), 800);
 
-// Boutons/saisie VITESSE
+// Actions
 document.getElementById('btn_add').onclick=()=>{ 
   const Temps = formatTime(vm.value,vs.value,vc.value); 
   runs.push(Temps); 
   render(); 
-  debouncedAutoSave(); // autosave après ajout
+  debouncedAutoSave(); 
 };
-
 document.getElementById('btn_clear').onclick=()=>{ 
   runs.length=0; 
   render(); 
-  // Pas d'autosave si 0 essai (on ne veut pas écraser avec vide)
 };
 
-// Chrono intégré
 let t0=0, timer=null, running=false;
 function tick(){ 
   const dt=Date.now()-t0, c=Math.floor(dt/10)%100, s=Math.floor(dt/1000)%60, m=Math.floor(dt/60000); 
   vtimer.textContent=formatTime(m,s,c); 
 }
-document.getElementById('vstart').onclick=()=>{ 
-  if(!running){ running=true; t0=Date.now(); timer=setInterval(tick, 10);} 
-};
-document.getElementById('vstop').onclick=()=>{ 
-  if(!running) return; 
-  running=false; 
-  clearInterval(timer); 
-  timer=null; 
-};
-document.getElementById('vreset').onclick=()=>{ 
-  running=false; 
-  if(timer) clearInterval(timer); 
-  vtimer.textContent='00:00:00'; 
-};
-document.getElementById('btn_add_from_chrono').onclick=()=>{ 
-  runs.push(vtimer.textContent); 
-  render(); 
-  debouncedAutoSave(); // autosave après ajout depuis chrono
-};
+document.getElementById('vstart').onclick=()=>{ if(!running){ running=true; t0=Date.now(); timer=setInterval(tick, 10);} };
+document.getElementById('vstop').onclick=()=>{ if(!running) return; running=false; clearInterval(timer); timer=null; };
+document.getElementById('vreset').onclick=()=>{ running=false; if(timer) clearInterval(timer); vtimer.textContent='00:00:00'; };
+document.getElementById('btn_add_from_chrono').onclick=()=>{ runs.push(vtimer.textContent); render(); debouncedAutoSave(); };
 
-// Bouton ENREGISTRER (alerte conservée)
-document.getElementById('btn_save').onclick=()=>{ 
-  persistVitesse(false); // même logique, mais avec l'alerte visible
-};
+document.getElementById('btn_save').onclick=()=>{ persistVitesse(false); }; // toast + alerte
 
-// QR Code
 document.getElementById('btn_qr').onclick=()=>{
-  const bc=bestAndCount(); 
-  if(!bc.best){ alert('Ajoute un essai'); return; }
+  const bc=bestAndCount(); if(!bc.best){ alert('Ajoute un essai'); return; }
   const obj={ nom:id.nom, prenom:id.prenom, classe:id.classe, vitesse:bc.best };
-  const txt=makeQR('qrv', obj); 
-  jsonv.textContent=txt; 
-  document.getElementById('qr-section').style.display='block';
+  const txt=makeQR('qrv', obj); jsonv.textContent=txt; document.getElementById('qr-section').style.display='block';
 };
 
-// --- Déclencheurs d’auto-enregistrement « invisibles » ---
-document.addEventListener('visibilitychange', ()=>{ 
-  if (document.hidden) persistVitesse(true); 
-});
-window.addEventListener('beforeunload', ()=>{ 
-  persistVitesse(true); 
-});
+// Triggers autosave
+document.addEventListener('visibilitychange', ()=>{ if (document.hidden) persistVitesse(true); });
+window.addEventListener('beforeunload', ()=>{ persistVitesse(true); });
 setInterval(()=>persistVitesse(true), 30000);
 
-// Rendu initial
 render();
 </script></body></html>
