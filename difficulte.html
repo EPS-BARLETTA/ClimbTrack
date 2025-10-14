@@ -35,6 +35,15 @@
     <div id="qr-section" style="display:none;margin-top:16px;"><h3>📷 QR code prêt</h3><div class="qr-wrap"><div class="qr-box" id="qrd"></div><pre class="pre" id="jsond"></pre></div></div>
   </div></div>
   <footer><div class="container"><div class="footer-inner"></div></div></footer>
+
+  <!-- Toast -->
+  <div id="autosave-toast" style="
+    position:fixed; left:50%; bottom:16px; transform:translate(-50%,12px);
+    background:#16a34a; color:#fff; padding:10px 14px; border-radius:12px;
+    font-weight:600; font-size:.95rem; box-shadow:0 6px 18px rgba(0,0,0,.2);
+    opacity:0; transition:opacity .25s ease, transform .25s ease; z-index:9999;
+  ">Séance enregistrée ✅</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script type="module">
 import {getIdentite, ensureIdentite, renderFooter, loadSeance, saveSeance, makeQR} from './app.js';
@@ -56,7 +65,19 @@ const list=[];
 const dres=document.getElementById('d_resultat'), motifs=document.getElementById('motifs');
 dres.addEventListener('change', ()=>{ motifs.style.display = (dres.value==='ne') ? 'block' : 'none'; });
 
-// -------- Rendu
+// Toast helper
+function showToast(msg='Séance enregistrée ✅'){
+  const t = document.getElementById('autosave-toast');
+  t.textContent = msg;
+  t.style.opacity = '1';
+  t.style.transform = 'translate(-50%, 0)';
+  clearTimeout(t._hide);
+  t._hide = setTimeout(()=>{
+    t.style.opacity = '0';
+    t.style.transform = 'translate(-50%, 12px)';
+  }, 1500);
+}
+
 function render(){
   tbody.innerHTML='';
   list.forEach((it,i)=>{
@@ -74,21 +95,20 @@ function render(){
     btn.addEventListener('click', e=>{
       list.splice(+e.currentTarget.dataset.i,1);
       render();
-      debouncedAutoSave(); // autosave après suppression
+      debouncedAutoSave();
     });
   });
 }
 
-// -------- Enregistrement (silencieux par défaut)
 function persistDifficulte(silent=true){
-  if (!list.length) return; // évite d'écraser une séance existante si vide
+  if (!list.length) return;
   const s = loadSeance();
   s.difficulte = list.slice();
   saveSeance(s);
+  showToast();
   if (!silent) alert('Difficulté enregistrée ✅');
 }
 
-// -------- Anti-rebond générique
 function debounce(fn, delay){
   let t;
   return (...args)=>{
@@ -98,7 +118,6 @@ function debounce(fn, delay){
 }
 const debouncedAutoSave = debounce(()=>persistDifficulte(true), 800);
 
-// -------- Actions
 document.getElementById('btn_add').onclick=()=>{
   const cot=d_cotation.value.trim().toUpperCase();
   const rel=parseInt(d_relais.value||'0',10);
@@ -113,17 +132,16 @@ document.getElementById('btn_add').onclick=()=>{
   }
   list.push(it); 
   render();
-  debouncedAutoSave(); // autosave après ajout
+  debouncedAutoSave();
 };
 
 document.getElementById('btn_clear').onclick=()=>{ 
   list.length=0; 
   render(); 
-  // pas d'autosave quand vide
 };
 
 document.getElementById('btn_save').onclick=()=>{ 
-  persistDifficulte(false); // conserve l'alerte visible
+  persistDifficulte(false);
 };
 
 document.getElementById('btn_qr').onclick=()=>{
@@ -145,16 +163,9 @@ document.getElementById('btn_qr').onclick=()=>{
   document.getElementById('qr-section').style.display='block';
 };
 
-// -------- Déclencheurs d’auto-enregistrement « invisibles »
-document.addEventListener('visibilitychange', ()=>{ 
-  if (document.hidden) persistDifficulte(true); 
-});
-window.addEventListener('beforeunload', ()=>{ 
-  persistDifficulte(true); 
-});
+document.addEventListener('visibilitychange', ()=>{ if (document.hidden) persistDifficulte(true); });
+window.addEventListener('beforeunload', ()=>{ persistDifficulte(true); });
 setInterval(()=>persistDifficulte(true), 30000);
 
-// -------- Rendu initial
 render();
 </script></body></html>
-
