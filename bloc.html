@@ -27,6 +27,15 @@
     </div>
   </div></div>
   <footer><div class="container"><div class="footer-inner"></div></div></footer>
+
+  <!-- Toast -->
+  <div id="autosave-toast" style="
+    position:fixed; left:50%; bottom:16px; transform:translate(-50%,12px);
+    background:#16a34a; color:#fff; padding:10px 14px; border-radius:12px;
+    font-weight:600; font-size:.95rem; box-shadow:0 6px 18px rgba(0,0,0,.2);
+    opacity:0; transition:opacity .25s ease, transform .25s ease; z-index:9999;
+  ">Séance enregistrée ✅</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script type="module">
 import {getIdentite, ensureIdentite, renderFooter, loadSeance, saveSeance, makeQR} from './app.js';
@@ -41,7 +50,19 @@ const levelMap={jaune:'facile', vert:'peu_difficile', bleu:'assez_difficile', ro
 
 const list=[], tbody=document.querySelector('#b_table tbody');
 
-// ---- Rendu du tableau
+// Toast helper
+function showToast(msg='Séance enregistrée ✅'){
+  const t = document.getElementById('autosave-toast');
+  t.textContent = msg;
+  t.style.opacity = '1';
+  t.style.transform = 'translate(-50%, 0)';
+  clearTimeout(t._hide);
+  t._hide = setTimeout(()=>{
+    t.style.opacity = '0';
+    t.style.transform = 'translate(-50%, 12px)';
+  }, 1500);
+}
+
 function render(){
   tbody.innerHTML='';
   list.forEach((it,i)=>{
@@ -54,21 +75,20 @@ function render(){
     btn.addEventListener('click', e=>{
       list.splice(+e.currentTarget.dataset.i,1);
       render();
-      debouncedAutoSave(); // autosave après suppression
+      debouncedAutoSave();
     });
   });
 }
 
-// ---- Enregistrement (réutilise ta logique, silencieux par défaut)
 function persistBloc(silent=true){
-  if (!list.length) return; // évite d'écraser une séance existante par une liste vide
+  if (!list.length) return;
   const s = loadSeance();
   s.bloc = list.slice();
   saveSeance(s);
+  showToast();
   if (!silent) alert('Blocs enregistrés ✅');
 }
 
-// ---- Anti-rebond générique
 function debounce(fn, delay){
   let t;
   return (...args)=>{
@@ -78,24 +98,22 @@ function debounce(fn, delay){
 }
 const debouncedAutoSave = debounce(()=>persistBloc(true), 800);
 
-// ---- Actions UI
 document.getElementById('b_add').onclick=()=>{
   const c=b_couleur.value;
   const n=parseInt(b_num.value||'0',10);
   if(!n){alert('Numéro ?');return;}
   list.push({c, n, lvl:levelMap[c]});
   render();
-  debouncedAutoSave(); // autosave après ajout
+  debouncedAutoSave();
 };
 
 document.getElementById('b_clear').onclick=()=>{
   list.length=0;
   render();
-  // Pas d'autosave quand vide : on évite d'écraser une séance existante avec une liste vide
 };
 
 document.getElementById('b_save').onclick=()=>{
-  persistBloc(false); // même logique, mais avec l'alerte visible
+  persistBloc(false);
 };
 
 document.getElementById('b_qr').onclick=()=>{
@@ -107,16 +125,9 @@ document.getElementById('b_qr').onclick=()=>{
   document.getElementById('qr-section').style.display='block';
 };
 
-// ---- Déclencheurs d’auto-enregistrement « invisibles »
-document.addEventListener('visibilitychange', ()=>{
-  if (document.hidden) persistBloc(true);
-});
-window.addEventListener('beforeunload', ()=>{
-  persistBloc(true);
-});
+document.addEventListener('visibilitychange', ()=>{ if (document.hidden) persistBloc(true); });
+window.addEventListener('beforeunload', ()=>{ persistBloc(true); });
 setInterval(()=>persistBloc(true), 30000);
 
-// ---- Rendu initial
 render();
 </script></body></html>
-
