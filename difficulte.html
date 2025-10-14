@@ -38,7 +38,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script type="module">
 import {getIdentite, ensureIdentite, renderFooter, loadSeance, saveSeance, makeQR} from './app.js';
-renderFooter(); ensureIdentite();
+
+renderFooter(); 
+ensureIdentite();
+
 const id = getIdentite();
 document.getElementById('idline').innerHTML = `Élève : <strong>${id.prenom} ${id.nom}</strong> — <span class='badge'>Classe : ${id.classe}</span>`;
 
@@ -47,10 +50,13 @@ function motifCodeNE({degx, nbprise, td}){
   const parts=[]; if(degx && degx>0) parts.push('NED'+degx); if(nbprise && nbprise>0) parts.push('MC'+nbprise); if(td) parts.push('TD'); return parts.join(' ');
 }
 
-const tbody=document.querySelector('#d_table tbody'); const list=[];
+const tbody=document.querySelector('#d_table tbody'); 
+const list=[];
+
 const dres=document.getElementById('d_resultat'), motifs=document.getElementById('motifs');
 dres.addEventListener('change', ()=>{ motifs.style.display = (dres.value==='ne') ? 'block' : 'none'; });
 
+// -------- Rendu
 function render(){
   tbody.innerHTML='';
   list.forEach((it,i)=>{
@@ -64,9 +70,35 @@ function render(){
     tr.innerHTML=`<td>${i+1}</td><td>${it.cotation}</td><td>${it.relais}</td><td>${it.style}</td><td>${resTxt}</td><td>${details}</td><td><button class="btn red" data-i="${i}">Supprimer</button></td>`;
     tbody.appendChild(tr);
   });
-  tbody.querySelectorAll('button[data-i]').forEach(btn=>btn.addEventListener('click', e=>{ list.splice(+e.currentTarget.dataset.i,1); render(); }));
+  tbody.querySelectorAll('button[data-i]').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      list.splice(+e.currentTarget.dataset.i,1);
+      render();
+      debouncedAutoSave(); // autosave après suppression
+    });
+  });
 }
 
+// -------- Enregistrement (silencieux par défaut)
+function persistDifficulte(silent=true){
+  if (!list.length) return; // évite d'écraser une séance existante si vide
+  const s = loadSeance();
+  s.difficulte = list.slice();
+  saveSeance(s);
+  if (!silent) alert('Difficulté enregistrée ✅');
+}
+
+// -------- Anti-rebond générique
+function debounce(fn, delay){
+  let t;
+  return (...args)=>{
+    clearTimeout(t);
+    t=setTimeout(()=>fn(...args), delay);
+  };
+}
+const debouncedAutoSave = debounce(()=>persistDifficulte(true), 800);
+
+// -------- Actions
 document.getElementById('btn_add').onclick=()=>{
   const cot=d_cotation.value.trim().toUpperCase();
   const rel=parseInt(d_relais.value||'0',10);
@@ -74,19 +106,55 @@ document.getElementById('btn_add').onclick=()=>{
   const res=d_resultat.value; // e1,e2,ne
   if(!cot){ alert('Saisir une cotation'); return; }
   const it={cotation:cot, relais:rel, style:sty, res:res};
-  if(res==='ne'){ it.degx=parseInt(d_degx.value||'0',10); it.nbprise=parseInt(d_nbprise.value||'0',10); it.td=document.getElementById('d_td').checked; }
-  list.push(it); render();
+  if(res==='ne'){ 
+    it.degx=parseInt(d_degx.value|| '0',10); 
+    it.nbprise=parseInt(d_nbprise.value|| '0',10); 
+    it.td=document.getElementById('d_td').checked; 
+  }
+  list.push(it); 
+  render();
+  debouncedAutoSave(); // autosave après ajout
 };
-document.getElementById('btn_clear').onclick=()=>{ list.length=0; render(); };
-document.getElementById('btn_save').onclick=()=>{ const s=loadSeance(); s.difficulte=list.slice(); saveSeance(s); alert('Difficulté enregistrée ✅'); };
+
+document.getElementById('btn_clear').onclick=()=>{ 
+  list.length=0; 
+  render(); 
+  // pas d'autosave quand vide
+};
+
+document.getElementById('btn_save').onclick=()=>{ 
+  persistDifficulte(false); // conserve l'alerte visible
+};
+
 document.getElementById('btn_qr').onclick=()=>{
   if(!list.length){ alert('Ajoute une réalisation'); return; }
   const obj={ nom:id.nom, prenom:id.prenom, classe:id.classe };
   list.forEach((d,idx)=>{
     const sc=styleCode(d.style);
-    let code=''; if(d.res==='e1') code='E'; else if(d.res==='e2') code='E2'; else { const ne = motifCodeNE({degx:d.degx, nbprise:d.nbprise, td:d.td}); code = 'NE' + (ne?(' '+ne):''); }
+    let code=''; 
+    if(d.res==='e1') code='E'; 
+    else if(d.res==='e2') code='E2'; 
+    else { 
+      const ne = motifCodeNE({degx:d.degx, nbprise:d.nbprise, td:d.td}); 
+      code = 'NE' + (ne?(' '+ne):''); 
+    }
     obj['difficulte_'+(idx+1)] = `${sc} R${d.relais} ${d.cotation} ${code}`;
   });
-  const txt=makeQR('qrd', obj); jsond.textContent=txt; document.getElementById('qr-section').style.display='block';
+  const txt=makeQR('qrd', obj); 
+  jsond.textContent=txt; 
+  document.getElementById('qr-section').style.display='block';
 };
+
+// -------- Déclencheurs d’auto-enregistrement « invisibles »
+document.addEventListener('visibilitychange', ()=>{ 
+  if (document.hidden) persistDifficulte(true); 
+});
+window.addEventListener('beforeunload', ()=>{ 
+  persistDifficulte(true); 
+});
+setInterval(()=>persistDifficulte(true), 30000);
+
+// -------- Rendu initial
+render();
 </script></body></html>
+
