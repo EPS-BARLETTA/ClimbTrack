@@ -30,20 +30,93 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script type="module">
 import {getIdentite, ensureIdentite, renderFooter, loadSeance, saveSeance, makeQR} from './app.js';
-renderFooter(); ensureIdentite();
+
+renderFooter(); 
+ensureIdentite();
+
 const id = getIdentite();
 document.getElementById('idline').innerHTML = `Élève : <strong>${id.prenom} ${id.nom}</strong> — <span class='badge'>Classe : ${id.classe}</span>`;
+
 const levelMap={jaune:'facile', vert:'peu_difficile', bleu:'assez_difficile', rouge:'difficile', noir:'tres_difficile', mauve:'abominable'};
+
 const list=[], tbody=document.querySelector('#b_table tbody');
-function render(){ tbody.innerHTML=''; list.forEach((it,i)=>{ const icon = `<span class="color-dot dot-${it.c}"></span>`; const tr=document.createElement('tr'); tr.innerHTML=`<td>${i+1}</td><td>${icon}${it.c}</td><td>${levelMap[it.c]}</td><td>${it.n}</td><td><button class="btn red" data-i="${i}">Supprimer</button></td>`; tbody.appendChild(tr); });
-  tbody.querySelectorAll('button[data-i]').forEach(btn=>btn.addEventListener('click', e=>{ list.splice(+e.currentTarget.dataset.i,1); render(); })); }
-document.getElementById('b_add').onclick=()=>{ const c=b_couleur.value; const n=parseInt(b_num.value||'0',10); if(!n){alert('Numéro ?');return;} list.push({c, n, lvl:levelMap[c]}); render(); };
-document.getElementById('b_clear').onclick=()=>{ list.length=0; render(); };
-document.getElementById('b_save').onclick=()=>{ const s=loadSeance(); s.bloc=list.slice(); saveSeance(s); alert('Blocs enregistrés ✅'); };
+
+// ---- Rendu du tableau
+function render(){
+  tbody.innerHTML='';
+  list.forEach((it,i)=>{
+    const icon = `<span class="color-dot dot-${it.c}"></span>`;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${i+1}</td><td>${icon}${it.c}</td><td>${levelMap[it.c]}</td><td>${it.n}</td><td><button class="btn red" data-i="${i}">Supprimer</button></td>`;
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll('button[data-i]').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      list.splice(+e.currentTarget.dataset.i,1);
+      render();
+      debouncedAutoSave(); // autosave après suppression
+    });
+  });
+}
+
+// ---- Enregistrement (réutilise ta logique, silencieux par défaut)
+function persistBloc(silent=true){
+  if (!list.length) return; // évite d'écraser une séance existante par une liste vide
+  const s = loadSeance();
+  s.bloc = list.slice();
+  saveSeance(s);
+  if (!silent) alert('Blocs enregistrés ✅');
+}
+
+// ---- Anti-rebond générique
+function debounce(fn, delay){
+  let t;
+  return (...args)=>{
+    clearTimeout(t);
+    t=setTimeout(()=>fn(...args), delay);
+  };
+}
+const debouncedAutoSave = debounce(()=>persistBloc(true), 800);
+
+// ---- Actions UI
+document.getElementById('b_add').onclick=()=>{
+  const c=b_couleur.value;
+  const n=parseInt(b_num.value||'0',10);
+  if(!n){alert('Numéro ?');return;}
+  list.push({c, n, lvl:levelMap[c]});
+  render();
+  debouncedAutoSave(); // autosave après ajout
+};
+
+document.getElementById('b_clear').onclick=()=>{
+  list.length=0;
+  render();
+  // Pas d'autosave quand vide : on évite d'écraser une séance existante avec une liste vide
+};
+
+document.getElementById('b_save').onclick=()=>{
+  persistBloc(false); // même logique, mais avec l'alerte visible
+};
+
 document.getElementById('b_qr').onclick=()=>{
   if(!list.length){ alert('Ajoute un bloc'); return; }
   const obj = { nom:id.nom, prenom:id.prenom, classe:id.classe };
   list.forEach((b,idx)=>{ obj['bloc_'+(idx+1)] = `${b.c} R${b.n}`; });
-  const txt=makeQR('qrb', obj); jsonb.textContent=txt; document.getElementById('qr-section').style.display='block';
+  const txt=makeQR('qrb', obj);
+  jsonb.textContent=txt;
+  document.getElementById('qr-section').style.display='block';
 };
+
+// ---- Déclencheurs d’auto-enregistrement « invisibles »
+document.addEventListener('visibilitychange', ()=>{
+  if (document.hidden) persistBloc(true);
+});
+window.addEventListener('beforeunload', ()=>{
+  persistBloc(true);
+});
+setInterval(()=>persistBloc(true), 30000);
+
+// ---- Rendu initial
+render();
 </script></body></html>
+
