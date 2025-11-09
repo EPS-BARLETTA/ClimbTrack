@@ -1,78 +1,40 @@
-<!doctype html>
-<html lang="fr">
-<head>
-<meta charset="utf-8">
+<!doctype html><html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ClimbTrack — Bloc</title>
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
-<div class="main-wrap">
-  <div class="container">
-    <div class="headerbar">
-      <div class="logo">🧱 <span class="highlight">Bloc</span></div>
-      <div class="right">
-        <a class="btn green big" href="menu.html">🏠 Menu</a>
-        <a class="btn blue big" href="aide.html">❓ Aide</a>
-      </div>
+<title>ClimbTrack — Bloc</title><link rel="stylesheet" href="style.css"></head>
+<body><div class="main-wrap"><div class="container">
+  <div class="headerbar"><div class="logo">🧱 <span class="highlight">Bloc</span></div>
+    <div class="right"><a class="btn green big" href="menu.html">🏠 Menu</a><a class="btn blue big" href="aide.html">❓ Aide</a></div></div>
+  <div class="card"><h2>Blocs réussis</h2><p class="lead" id="idline"></p>
+    <label>Couleur<select id="b_couleur">
+      <option value="jaune">🟨 Jaune — facile</option>
+      <option value="vert">🟩 Vert — peu difficile</option>
+      <option value="bleu">🟦 Bleu — assez difficile</option>
+      <option value="rouge">🟥 Rouge — difficile</option>
+      <option value="noir">⬛ Noir — très difficile</option>
+      <option value="mauve">🟪 Mauve — abominable</option>
+    </select></label>
+    <label>Numéro<input id="b_num" type="number" min="1" max="200" placeholder="Ex. 5"></label>
+    <div class="actions"><button class="btn blue big" id="b_add">➕ Ajouter</button><button class="btn red big" id="b_clear">♻️ Vider</button></div>
+    <table class="table" id="b_table"><thead><tr><th>#</th><th>Couleur</th><th>Niveau</th><th>Numéro</th><th>Action</th></tr></thead><tbody></tbody></table>
+    <div class="actions">
+      <button class="btn green big" id="b_save">💾 Enregistrer séance</button>
+      <button class="btn green big" id="b_qr">📷 QR code Bloc</button>
+      <a class="btn" href="seance.html">➡️ QR de séance</a>
     </div>
-
-    <div class="card">
-      <h2>Blocs réussis</h2>
-      <p class="lead" id="idline"></p>
-
-      <label>Couleur
-        <select id="b_couleur">
-          <option value="jaune">🟨 Jaune — facile</option>
-          <option value="vert">🟩 Vert — peu difficile</option>
-          <option value="bleu">🟦 Bleu — assez difficile</option>
-          <option value="rouge">🟥 Rouge — difficile</option>
-          <option value="noir">⬛ Noir — très difficile</option>
-          <option value="mauve">🟪 Mauve — abominable</option>
-        </select>
-      </label>
-
-      <label>Numéro<input id="b_num" type="number" min="1" max="200" placeholder="Ex. 5"></label>
-
-      <div class="actions">
-        <button class="btn blue big" id="b_add">➕ Ajouter</button>
-        <button class="btn red big" id="b_clear">♻️ Vider</button>
-      </div>
-
-      <table class="table" id="b_table">
-        <thead>
-          <tr><th>#</th><th>Couleur</th><th>Niveau</th><th>Numéro</th><th>Action</th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-
-      <div class="actions">
-        <button class="btn green big" id="b_save">💾 Enregistrer séance</button>
-        <button class="btn green big" id="b_qr">📷 QR code Bloc</button>
-        <a class="btn" href="seance.html">➡️ QR de séance</a>
-      </div>
-
-      <div id="qr-section" style="display:none;margin-top:16px;">
-        <h3>📷 QR code prêt</h3>
-        <div class="qr-wrap">
-          <div class="qr-box" id="qrb"></div>
-          <pre class="pre" id="jsonb"></pre>
-        </div>
-      </div>
+    <div id="qr-section" style="display:none;margin-top:16px;">
+      <h3>📷 QR code prêt</h3>
+      <div class="qr-wrap"><div class="qr-box" id="qrb"></div><pre class="pre" id="jsonb"></pre></div>
     </div>
-  </div>
-</div>
+  </div></div>
+  <footer><div class="container"><div class="footer-inner"></div></div></footer>
 
-<footer>
-  <div class="container"><div class="footer-inner"></div></div>
-</footer>
-
-<div id="autosave-toast" style="
+  <!-- Toast -->
+  <div id="autosave-toast" style="
     position:fixed; left:50%; bottom:16px; transform:translate(-50%,12px);
     background:#16a34a; color:#fff; padding:10px 14px; border-radius:12px;
     font-weight:600; font-size:.95rem; box-shadow:0 6px 18px rgba(0,0,0,.2);
     opacity:0; transition:opacity .25s ease, transform .25s ease; z-index:9999;
-">Séance enregistrée ✅</div>
+  ">Séance enregistrée ✅</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script type="module">
@@ -85,8 +47,10 @@ const id = getIdentite();
 document.getElementById('idline').innerHTML = `Élève : <strong>${id.prenom} ${id.nom}</strong> — <span class='badge'>Classe : ${id.classe}</span>`;
 
 const levelMap={jaune:'facile', vert:'peu_difficile', bleu:'assez_difficile', rouge:'difficile', noir:'tres_difficile', mauve:'abominable'};
+
 const list=[], tbody=document.querySelector('#b_table tbody');
 
+// Toast helper
 function showToast(msg='Séance enregistrée ✅'){
   const t = document.getElementById('autosave-toast');
   t.textContent = msg;
@@ -166,6 +130,4 @@ window.addEventListener('beforeunload', ()=>{ persistBloc(true); });
 setInterval(()=>persistBloc(true), 30000);
 
 render();
-</script>
-</body>
-</html>
+</script></body></html>
