@@ -31,6 +31,7 @@
           <option value="mauve">🟪 Mauve — abominable</option>
         </select>
       </label>
+
       <label>Numéro<input id="b_num" type="number" min="1" max="200" placeholder="Ex. 5"></label>
 
       <div class="actions">
@@ -67,28 +68,24 @@
 </footer>
 
 <div id="autosave-toast" style="
-  position:fixed; left:50%; bottom:16px; transform:translate(-50%,12px);
-  background:#16a34a; color:#fff; padding:10px 14px; border-radius:12px;
-  font-weight:600; font-size:.95rem; box-shadow:0 6px 18px rgba(0,0,0,.2);
-  opacity:0; transition:opacity .25s ease, transform .25s ease; z-index:9999;
+    position:fixed; left:50%; bottom:16px; transform:translate(-50%,12px);
+    background:#16a34a; color:#fff; padding:10px 14px; border-radius:12px;
+    font-weight:600; font-size:.95rem; box-shadow:0 6px 18px rgba(0,0,0,.2);
+    opacity:0; transition:opacity .25s ease, transform .25s ease; z-index:9999;
 ">Séance enregistrée ✅</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script type="module">
+import {getIdentite, ensureIdentite, renderFooter, loadSeance, saveSeance, makeQR} from './app.js';
 
-<!-- Mac / PC -->
-<script type="module" src="app.js"></script>
-<!-- iPad / Safari -->
-<script nomodule src="app.nomodule.js"></script>
+renderFooter(); 
+ensureIdentite();
 
-<script>
-renderFooter();
-const id = ensureIdentite();
+const id = getIdentite();
 document.getElementById('idline').innerHTML = `Élève : <strong>${id.prenom} ${id.nom}</strong> — <span class='badge'>Classe : ${id.classe}</span>`;
 
-const levelMap = { jaune:'facile', vert:'peu_difficile', bleu:'assez_difficile', rouge:'difficile', noir:'tres_difficile', mauve:'abominable' };
-
-const list = [];
-const tbody = document.querySelector('#b_table tbody');
+const levelMap={jaune:'facile', vert:'peu_difficile', bleu:'assez_difficile', rouge:'difficile', noir:'tres_difficile', mauve:'abominable'};
+const list=[], tbody=document.querySelector('#b_table tbody');
 
 function showToast(msg='Séance enregistrée ✅'){
   const t = document.getElementById('autosave-toast');
@@ -103,11 +100,11 @@ function showToast(msg='Séance enregistrée ✅'){
 }
 
 function render(){
-  tbody.innerHTML = '';
+  tbody.innerHTML='';
   list.forEach((it,i)=>{
     const icon = `<span class="color-dot dot-${it.c}"></span>`;
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${i+1}</td><td>${icon}${it.c}</td><td>${levelMap[it.c]}</td><td>${it.n}</td><td><button class="btn red" data-i="${i}">Supprimer</button></td>`;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${i+1}</td><td>${icon}${it.c}</td><td>${levelMap[it.c]}</td><td>${it.n}</td><td><button class="btn red" data-i="${i}">Supprimer</button></td>`;
     tbody.appendChild(tr);
   });
   tbody.querySelectorAll('button[data-i]').forEach(btn=>{
@@ -120,10 +117,12 @@ function render(){
 }
 
 function persistBloc(silent=true){
-  if(!list.length) return;
-  saveSeanceMerge({ bloc: list.slice() });
-  if(!silent) alert('Blocs enregistrés ✅');
+  if (!list.length) return;
+  const s = loadSeance();
+  s.bloc = list.slice();
+  saveSeance(s);
   showToast();
+  if (!silent) alert('Blocs enregistrés ✅');
 }
 
 function debounce(fn, delay){
@@ -135,32 +134,34 @@ function debounce(fn, delay){
 }
 const debouncedAutoSave = debounce(()=>persistBloc(true), 800);
 
-document.getElementById('b_add').onclick = ()=>{
-  const c = b_couleur.value;
-  const n = parseInt(b_num.value||'0',10);
-  if(!n){ alert('Numéro ?'); return; }
-  list.push({c,n,lvl:levelMap[c]});
+document.getElementById('b_add').onclick=()=>{
+  const c=b_couleur.value;
+  const n=parseInt(b_num.value||'0',10);
+  if(!n){alert('Numéro ?');return;}
+  list.push({c, n, lvl:levelMap[c]});
   render();
   debouncedAutoSave();
 };
 
-document.getElementById('b_clear').onclick = ()=>{
-  list.length = 0;
+document.getElementById('b_clear').onclick=()=>{
+  list.length=0;
   render();
 };
 
-document.getElementById('b_save').onclick = ()=>{ persistBloc(false); };
+document.getElementById('b_save').onclick=()=>{
+  persistBloc(false);
+};
 
-document.getElementById('b_qr').onclick = ()=>{
+document.getElementById('b_qr').onclick=()=>{
   if(!list.length){ alert('Ajoute un bloc'); return; }
   const obj = { nom:id.nom, prenom:id.prenom, classe:id.classe };
   list.forEach((b,idx)=>{ obj['bloc_'+(idx+1)] = `${b.c} R${b.n}`; });
-  const txt = makeQR('qrb', obj);
-  jsonb.textContent = txt;
+  const txt=makeQR('qrb', obj);
+  jsonb.textContent=txt;
   document.getElementById('qr-section').style.display='block';
 };
 
-document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) persistBloc(true); });
+document.addEventListener('visibilitychange', ()=>{ if (document.hidden) persistBloc(true); });
 window.addEventListener('beforeunload', ()=>{ persistBloc(true); });
 setInterval(()=>persistBloc(true), 30000);
 
