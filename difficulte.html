@@ -1,62 +1,114 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8">
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ClimbTrack — Difficulté</title><link rel="stylesheet" href="style.css"></head>
-<body><div class="main-wrap"><div class="container">
-  <div class="headerbar"><div class="logo">🧗 <span class="highlight">Difficulté</span></div>
-    <div class="right"><a class="btn green big" href="menu.html">🏠 Menu</a><a class="btn blue big" href="aide.html">❓ Aide</a></div></div>
-  <div class="card"><h2>Saisie (cotation / relais / style)</h2><p class="lead" id="idline"></p>
-    <label>Cotation<input id="d_cotation" placeholder="Ex. 5c, 6a+"></label>
-    <label>Relais atteint (X)<input id="d_relais" type="number" min="0" max="40" placeholder="Ex. 5"></label>
-    <label>Style<select id="d_style"><option value="moulinette">Moulinette</option><option value="en_tete">En tête</option><option value="mouli_tete">Mouli-tête</option></select></label>
-    <label>Résultat
-      <select id="d_resultat">
-        <option value="e1">Voie enchaînée (1er essai)</option>
-        <option value="e2">Enchaînée en 2e essai</option>
-        <option value="ne">Pas enchaînée</option>
-      </select>
-    </label>
-    <div id="motifs" style="display:none;">
-      <div class="row row-3">
-        <div class="card" id="m_deg" style="text-align:left;">
-          <label>Dégaine (numéro)<input id="d_degx" type="number" min="0" max="40" placeholder="Ex. 4"></label>
-        </div>
-        <div class="card" id="m_mc" style="text-align:left;">
-          <label>Prises en plus (multi-couleur)<input id="d_nbprise" type="number" min="0" max="20" placeholder="Ex. 2"></label>
-        </div>
-        <div class="card" id="m_td" style="text-align:left;">
-          <label><input type="checkbox" id="d_td"> Trop difficile</label>
-        </div>
+<title>ClimbTrack — Difficulté</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="main-wrap">
+  <div class="container">
+    <div class="headerbar">
+      <div class="logo">🧗 <span class="highlight">Difficulté</span></div>
+      <div class="right">
+        <a class="btn green big" href="menu.html">🏠 Menu</a>
+        <a class="btn blue big" href="aide.html">❓ Aide</a>
       </div>
-      <p class="small">Codes générés : <strong>NEDx</strong> (dégaine x), <strong>MCx</strong> (prises en plus), <strong>TD</strong> (trop difficile).</p>
     </div>
-    <div class="actions"><button class="btn blue big" id="btn_add">➕ Ajouter</button><button class="btn red big" id="btn_clear">♻️ Vider</button></div>
-    <table class="table" id="d_table"><thead><tr><th>#</th><th>Cotation</th><th>Relais</th><th>Style</th><th>Résultat</th><th>Détails</th><th>Action</th></tr></thead><tbody></tbody></table>
-    <div class="actions"><button class="btn green big" id="btn_save">💾 Enregistrer séance</button><button class="btn green big" id="btn_qr">📷 QR code Difficulté</button><a class="btn" href="seance.html">➡️ QR de séance</a></div>
-    <div id="qr-section" style="display:none;margin-top:16px;"><h3>📷 QR code prêt</h3><div class="qr-wrap"><div class="qr-box" id="qrd"></div><pre class="pre" id="jsond"></pre></div></div>
-  </div></div>
-  <footer><div class="container"><div class="footer-inner"></div></div></footer>
 
-  <!-- Toast -->
-  <div id="autosave-toast" style="
-    position:fixed; left:50%; bottom:16px; transform:translate(-50%,12px);
-    background:#16a34a; color:#fff; padding:10px 14px; border-radius:12px;
-    font-weight:600; font-size:.95rem; box-shadow:0 6px 18px rgba(0,0,0,.2);
-    opacity:0; transition:opacity .25s ease, transform .25s ease; z-index:9999;
-  ">Séance enregistrée ✅</div>
+    <div class="card">
+      <h2>Saisie (cotation / relais / style)</h2>
+      <p class="lead" id="idline"></p>
+
+      <label>Cotation<input id="d_cotation" placeholder="Ex. 5c, 6a+"></label>
+      <label>Relais atteint (X)<input id="d_relais" type="number" min="0" max="40" placeholder="Ex. 5"></label>
+      <label>Style
+        <select id="d_style">
+          <option value="moulinette">Moulinette</option>
+          <option value="en_tete">En tête</option>
+          <option value="mouli_tete">Mouli-tête</option>
+        </select>
+      </label>
+      <label>Résultat
+        <select id="d_resultat">
+          <option value="e1">Voie enchaînée (1er essai)</option>
+          <option value="e2">Enchaînée en 2e essai</option>
+          <option value="ne">Pas enchaînée</option>
+        </select>
+      </label>
+
+      <div id="motifs" style="display:none;">
+        <div class="row row-3">
+          <div class="card" id="m_deg" style="text-align:left;">
+            <label>Dégaine (numéro)<input id="d_degx" type="number" min="0" max="40" placeholder="Ex. 4"></label>
+          </div>
+          <div class="card" id="m_mc" style="text-align:left;">
+            <label>Prises en plus (multi-couleur)<input id="d_nbprise" type="number" min="0" max="20" placeholder="Ex. 2"></label>
+          </div>
+          <div class="card" id="m_td" style="text-align:left;">
+            <label><input type="checkbox" id="d_td"> Trop difficile</label>
+          </div>
+        </div>
+        <p class="small">Codes générés : <strong>NEDx</strong> (dégaine x), <strong>MCx</strong> (prises en plus), <strong>TD</strong> (trop difficile).</p>
+      </div>
+
+      <div class="actions">
+        <button class="btn blue big" id="btn_add">➕ Ajouter</button>
+        <button class="btn red big" id="btn_clear">♻️ Vider</button>
+      </div>
+
+      <table class="table" id="d_table">
+        <thead>
+          <tr><th>#</th><th>Cotation</th><th>Relais</th><th>Style</th><th>Résultat</th><th>Détails</th><th>Action</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <div class="actions">
+        <button class="btn green big" id="btn_save">💾 Enregistrer séance</button>
+        <button class="btn green big" id="btn_qr">📷 QR code Difficulté</button>
+        <a class="btn" href="seance.html">➡️ QR de séance</a>
+      </div>
+
+      <div id="qr-section" style="display:none;margin-top:16px;">
+        <h3>📷 QR code prêt</h3>
+        <div class="qr-wrap"><div class="qr-box" id="qrd"></div><pre class="pre" id="jsond"></pre></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="container"><div class="footer-inner"></div></div>
+</footer>
+
+<div id="autosave-toast" style="
+  position:fixed; left:50%; bottom:16px; transform:translate(-50%,12px);
+  background:#16a34a; color:#fff; padding:10px 14px; border-radius:12px;
+  font-weight:600; font-size:.95rem; box-shadow:0 6px 18px rgba(0,0,0,.2);
+  opacity:0; transition:opacity .25s ease, transform .25s ease; z-index:9999;
+">Séance enregistrée ✅</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script type="module">
-import {getIdentite, ensureIdentite, renderFooter, loadSeance, saveSeance, makeQR} from './app.js';
 
-renderFooter(); 
-ensureIdentite();
+<!-- Mac / PC -->
+<script type="module" src="app.js"></script>
+<!-- iPad / Safari -->
+<script nomodule src="app.nomodule.js"></script>
 
-const id = getIdentite();
+<script>
+renderFooter();
+const id = ensureIdentite();
 document.getElementById('idline').innerHTML = `Élève : <strong>${id.prenom} ${id.nom}</strong> — <span class='badge'>Classe : ${id.classe}</span>`;
 
 function styleCode(sty){ if(sty==='moulinette') return 'M'; if(sty==='en_tete') return 'T'; if(sty==='mouli_tete') return 'MT'; return ''; }
 function motifCodeNE({degx, nbprise, td}){
-  const parts=[]; if(degx && degx>0) parts.push('NED'+degx); if(nbprise && nbprise>0) parts.push('MC'+nbprise); if(td) parts.push('TD'); return parts.join(' ');
+  const parts=[];
+  if(degx && degx>0) parts.push('NED'+degx);
+  if(nbprise && nbprise>0) parts.push('MC'+nbprise);
+  if(td) parts.push('TD');
+  return parts.join(' ');
 }
 
 const tbody=document.querySelector('#d_table tbody'); 
@@ -65,7 +117,6 @@ const list=[];
 const dres=document.getElementById('d_resultat'), motifs=document.getElementById('motifs');
 dres.addEventListener('change', ()=>{ motifs.style.display = (dres.value==='ne') ? 'block' : 'none'; });
 
-// Toast helper
 function showToast(msg='Séance enregistrée ✅'){
   const t = document.getElementById('autosave-toast');
   t.textContent = msg;
@@ -84,7 +135,9 @@ function render(){
     let resTxt = (it.res==='e1')?'Enchaînée (1er)':(it.res==='e2'?'Enchaînée (2e)':'Non enchaînée');
     let details = '';
     if(it.res==='ne'){
-      const parts=[]; if(it.degx>0) parts.push('Dégaine '+it.degx); if(it.nbprise>0) parts.push('MC '+it.nbprise); if(it.td) parts.push('TD');
+      const parts=[]; if(it.degx>0) parts.push('Dégaine '+it.degx);
+      if(it.nbprise>0) parts.push('MC '+it.nbprise);
+      if(it.td) parts.push('TD');
       details = parts.join(' • ');
     }
     const tr=document.createElement('tr');
@@ -102,11 +155,9 @@ function render(){
 
 function persistDifficulte(silent=true){
   if (!list.length) return;
-  const s = loadSeance();
-  s.difficulte = list.slice();
-  saveSeance(s);
+  saveSeanceMerge({ difficulte: list.slice() }); // <- fusion avec la séance existante
+  if(!silent) alert('Difficulté enregistrée ✅');
   showToast();
-  if (!silent) alert('Difficulté enregistrée ✅');
 }
 
 function debounce(fn, delay){
@@ -122,7 +173,7 @@ document.getElementById('btn_add').onclick=()=>{
   const cot=d_cotation.value.trim().toUpperCase();
   const rel=parseInt(d_relais.value||'0',10);
   const sty=d_style.value;
-  const res=d_resultat.value; // e1,e2,ne
+  const res=d_resultat.value;
   if(!cot){ alert('Saisir une cotation'); return; }
   const it={cotation:cot, relais:rel, style:sty, res:res};
   if(res==='ne'){ 
@@ -168,4 +219,6 @@ window.addEventListener('beforeunload', ()=>{ persistDifficulte(true); });
 setInterval(()=>persistDifficulte(true), 30000);
 
 render();
-</script></body></html>
+</script>
+</body>
+</html>
