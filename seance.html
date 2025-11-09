@@ -46,7 +46,6 @@
           <pre class="pre" id="jsons"></pre>
         </div>
       </div>
-
     </div>
   </div>
 </div>
@@ -55,81 +54,86 @@
   <div class="container"><div class="footer-inner"></div></div>
 </footer>
 
-<!-- Librairie QR code -->
+<!-- QRCode.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-<!-- Pour Mac/PC -->
+<!-- Mac / PC -->
 <script type="module" src="app.js"></script>
-
-<!-- Pour iPad / Safari qui ne supporte pas module -->
+<!-- iPad / Safari -->
 <script nomodule src="app.nomodule.js"></script>
 
 <script>
-renderFooter(); 
-ensureIdentite(); 
-const id=getIdentite(); 
-document.getElementById('idline').innerHTML=`Élève : <strong>${id.prenom} ${id.nom}</strong> — <span class='badge'>Classe : ${id.classe}</span>`;
+renderFooter();
+const id = ensureIdentite();
+document.getElementById('idline').innerHTML = `Élève : <strong>${id.prenom} ${id.nom}</strong> — <span class='badge'>Classe : ${id.classe}</span>`;
 
-function styleCode(sty){ if(sty==='moulinette') return 'M'; if(sty==='en_tete') return 'T'; if(sty==='mouli_tete') return 'MT'; return ''; }
-function motifCodeNE({degx, nbprise, td}){ 
-  const parts=[]; 
-  if(degx && degx>0) parts.push('NED'+degx); 
-  if(nbprise && nbprise>0) parts.push('MC'+nbprise); 
-  if(td) parts.push('TD'); 
-  return parts.join(' '); 
+function styleCode(sty){
+  if(sty==='moulinette') return 'M';
+  if(sty==='en_tete') return 'T';
+  if(sty==='mouli_tete') return 'MT';
+  return '';
 }
 
-function render(){ 
-  const s=loadSeance();
-  const vTxt=(s.vitesse&&s.vitesse.best)?`Best=${s.vitesse.best} • NbEssais=${s.vitesse.nb}`:'—'; 
-  vzone.textContent=vTxt;
+function motifCodeNE({degx, nbprise, td}){
+  const parts=[];
+  if(degx && degx>0) parts.push('NED'+degx);
+  if(nbprise && nbprise>0) parts.push('MC'+nbprise);
+  if(td) parts.push('TD');
+  return parts.join(' ');
+}
 
-  dzone.textContent=(s.difficulte&&s.difficulte.length)
+function render(){
+  const s = loadSeance();
+  const vTxt = (s.vitesse && s.vitesse.best) ? `Best=${s.vitesse.best} • NbEssais=${s.vitesse.nb}` : '—';
+  vzone.textContent = vTxt;
+
+  dzone.textContent = (s.difficulte && s.difficulte.length)
     ? s.difficulte.map((x,i)=>{
         let code = (x.res==='e1')?'E':(x.res==='e2'?'E2':'NE');
-        if(x.res==='ne'){ 
-          const more = motifCodeNE({degx:x.degx, nbprise:x.nbprise, td:x.td}); 
-          if(more) code += ' '+more; 
+        if(x.res==='ne'){
+          const more = motifCodeNE({degx:x.degx, nbprise:x.nbprise, td:x.td});
+          if(more) code += ' '+more;
         }
         return `D${i+1}:[${styleCode(x.style)}] R${x.relais} ${x.cotation} — ${code}`;
       }).join('  |  ')
     : '—';
 
-  bzone.textContent=(s.bloc&&s.bloc.length)
+  bzone.textContent = (s.bloc && s.bloc.length)
     ? s.bloc.map((x,i)=>`B${i+1}:${x.c} R${x.n}`).join('  |  ')
     : '—';
 }
+
 render();
 
-// Rafraîchissement silencieux
-document.addEventListener('visibilitychange', ()=>{ if (!document.hidden) render(); });
-window.addEventListener('storage', (e)=>{ if (e.key && e.key.includes('seance')) render(); });
+// Rafraîchissements silencieux
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) render(); });
+window.addEventListener('storage', (e)=>{ if(e.key && e.key.includes('seance')) render(); });
 setInterval(render, 5000);
 
-document.getElementById('btn_qr').onclick=()=>{
-  const s=loadSeance();
-  const baseObj={ nom:id.nom, prenom:id.prenom, classe:id.classe };
+document.getElementById('btn_qr').onclick = ()=>{
+  const s = loadSeance();
+  const baseObj = { nom:id.nom, prenom:id.prenom, classe:id.classe };
 
-  const buildObj=()=>{
-    const obj={...baseObj};
-    if(s.bloc && s.bloc.length){ s.bloc.forEach((b,idx)=>{ obj['bloc_'+(idx+1)] = `${b.c} R${b.n}`; }); }
+  const buildObj = ()=>{
+    const obj = {...baseObj};
+    if(s.bloc && s.bloc.length) s.bloc.forEach((b,idx)=>{ obj['bloc_'+(idx+1)] = `${b.c} R${b.n}`; });
     if(s.difficulte && s.difficulte.length){
       s.difficulte.forEach((d,idx)=>{
-        const sc= (d.style==='moulinette')?'M':(d.style==='en_tete'?'T':'MT');
-        let code=''; 
-        if(d.res==='e1') code='E'; 
-        else if(d.res==='e2') code='E2'; 
+        const sc = (d.style==='moulinette')?'M':(d.style==='en_tete'?'T':'MT');
+        let code='';
+        if(d.res==='e1') code='E';
+        else if(d.res==='e2') code='E2';
         else {
-          const parts=[]; 
-          if(d.degx && d.degx>0) parts.push('NED'+d.degx); 
-          if(d.nbprise && d.nbprise>0) parts.push('MC'+d.nbprise); 
+          const parts=[];
+          if(d.degx && d.degx>0) parts.push('NED'+d.degx);
+          if(d.nbprise && d.nbprise>0) parts.push('MC'+d.nbprise);
           if(d.td) parts.push('TD');
-          code='NE' + (parts.length?(' '+parts.join(' ')):''); 
+          code='NE'+(parts.length?(' '+parts.join(' ')):'');
         }
         obj['difficulte_'+(idx+1)] = `${sc} R${d.relais} ${d.cotation} ${code}`;
       });
     }
-    if(s.vitesse && s.vitesse.best){ obj.vitesse = s.vitesse.best; }
+    if(s.vitesse && s.vitesse.best) obj.vitesse = s.vitesse.best;
     return obj;
   };
 
@@ -141,18 +145,18 @@ document.getElementById('btn_qr').onclick=()=>{
     const qrTxt = JSON.stringify([qrObj]);
     document.getElementById('qrs').innerHTML='';
     makeQR('qrs', qrObj, levelNow);
-    jsons.textContent=qrTxt;
+    jsons.textContent = qrTxt;
     setLastQRText(qrTxt);
     const bcount = enc.encode(qrTxt).length;
     const warn = document.getElementById('bytes');
     warn.textContent = bcount + ' octets (' + levelNow + ')';
-    if(levelNow==='H' && bcount>1100) { warn.textContent += ' • proche de la limite, Q recommandé'; }
+    if(levelNow==='H' && bcount>1100) warn.textContent += ' • proche de la limite, Q recommandé';
   }
 
   renderQR(level);
   document.getElementById('qr-section').style.display='block';
-  document.getElementById('fullscreen').onclick=()=>{ location.href='qrfull.html'; };
-  document.getElementById('toggleLevel').onclick=()=>{ level = (level==='H'?'Q':'H'); renderQR(level); };
+  document.getElementById('fullscreen').onclick = ()=>{ location.href='qrfull.html'; };
+  document.getElementById('toggleLevel').onclick = ()=>{ level = (level==='H'?'Q':'H'); renderQR(level); };
 };
 </script>
 </body>
