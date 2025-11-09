@@ -30,6 +30,7 @@
           <option value="mouli_tete">Mouli-tête</option>
         </select>
       </label>
+
       <label>Résultat
         <select id="d_resultat">
           <option value="e1">Voie enchaînée (1er essai)</option>
@@ -73,7 +74,10 @@
 
       <div id="qr-section" style="display:none;margin-top:16px;">
         <h3>📷 QR code prêt</h3>
-        <div class="qr-wrap"><div class="qr-box" id="qrd"></div><pre class="pre" id="jsond"></pre></div>
+        <div class="qr-wrap">
+          <div class="qr-box" id="qrd"></div>
+          <pre class="pre" id="jsond"></pre>
+        </div>
       </div>
     </div>
   </div>
@@ -84,30 +88,28 @@
 </footer>
 
 <div id="autosave-toast" style="
-  position:fixed; left:50%; bottom:16px; transform:translate(-50%,12px);
-  background:#16a34a; color:#fff; padding:10px 14px; border-radius:12px;
-  font-weight:600; font-size:.95rem; box-shadow:0 6px 18px rgba(0,0,0,.2);
-  opacity:0; transition:opacity .25s ease, transform .25s ease; z-index:9999;
+    position:fixed; left:50%; bottom:16px; transform:translate(-50%,12px);
+    background:#16a34a; color:#fff; padding:10px 14px; border-radius:12px;
+    font-weight:600; font-size:.95rem; box-shadow:0 6px 18px rgba(0,0,0,.2);
+    opacity:0; transition:opacity .25s ease, transform .25s ease; z-index:9999;
 ">Séance enregistrée ✅</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script type="module">
+import {getIdentite, ensureIdentite, renderFooter, loadSeance, saveSeance, makeQR} from './app.js';
 
-<!-- Mac / PC -->
-<script type="module" src="app.js"></script>
-<!-- iPad / Safari -->
-<script nomodule src="app.nomodule.js"></script>
-
-<script>
 renderFooter();
-const id = ensureIdentite();
+ensureIdentite();
+
+const id = getIdentite();
 document.getElementById('idline').innerHTML = `Élève : <strong>${id.prenom} ${id.nom}</strong> — <span class='badge'>Classe : ${id.classe}</span>`;
 
 function styleCode(sty){ if(sty==='moulinette') return 'M'; if(sty==='en_tete') return 'T'; if(sty==='mouli_tete') return 'MT'; return ''; }
 function motifCodeNE({degx, nbprise, td}){
-  const parts=[];
-  if(degx && degx>0) parts.push('NED'+degx);
-  if(nbprise && nbprise>0) parts.push('MC'+nbprise);
-  if(td) parts.push('TD');
+  const parts=[]; 
+  if(degx && degx>0) parts.push('NED'+degx); 
+  if(nbprise && nbprise>0) parts.push('MC'+nbprise); 
+  if(td) parts.push('TD'); 
   return parts.join(' ');
 }
 
@@ -135,8 +137,9 @@ function render(){
     let resTxt = (it.res==='e1')?'Enchaînée (1er)':(it.res==='e2'?'Enchaînée (2e)':'Non enchaînée');
     let details = '';
     if(it.res==='ne'){
-      const parts=[]; if(it.degx>0) parts.push('Dégaine '+it.degx);
-      if(it.nbprise>0) parts.push('MC '+it.nbprise);
+      const parts=[]; 
+      if(it.degx>0) parts.push('Dégaine '+it.degx); 
+      if(it.nbprise>0) parts.push('MC '+it.nbprise); 
       if(it.td) parts.push('TD');
       details = parts.join(' • ');
     }
@@ -155,9 +158,11 @@ function render(){
 
 function persistDifficulte(silent=true){
   if (!list.length) return;
-  saveSeanceMerge({ difficulte: list.slice() }); // <- fusion avec la séance existante
-  if(!silent) alert('Difficulté enregistrée ✅');
+  const s = loadSeance();
+  s.difficulte = list.slice();
+  saveSeance(s);
   showToast();
+  if (!silent) alert('Difficulté enregistrée ✅');
 }
 
 function debounce(fn, delay){
@@ -173,7 +178,7 @@ document.getElementById('btn_add').onclick=()=>{
   const cot=d_cotation.value.trim().toUpperCase();
   const rel=parseInt(d_relais.value||'0',10);
   const sty=d_style.value;
-  const res=d_resultat.value;
+  const res=d_resultat.value; // e1,e2,ne
   if(!cot){ alert('Saisir une cotation'); return; }
   const it={cotation:cot, relais:rel, style:sty, res:res};
   if(res==='ne'){ 
