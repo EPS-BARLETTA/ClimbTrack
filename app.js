@@ -1185,7 +1185,6 @@
     $("backup-info").textContent = a == null ? "Jamais sauvegardé sur cette tablette." : a === 0 ? "Dernière sauvegarde : aujourd'hui ✅" : "Dernière sauvegarde : il y a " + a + " jour(s).";
   }
   function renderCoverExtras() {
-    $("cover-install").hidden = isInstalled();
     $("cover-backup").hidden = true;
     getAllRoutes().then(function (routes) {
       routeCount = routes.length;
