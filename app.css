@@ -330,5 +330,13 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1p
 .check small.done { color: #6ee7b7; }
 .check small.todo { color: #fca5a5; }
 .dlg-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
-.btn.danger:not(:disabled) { background: #dc2626; color: #fff; border-color: transparent; }
+#new-confirm { background: #dc2626; color: #fff; border-color: transparent; }
+#new-confirm.locked { opacity: 0.55; }
+.check.missing { border-color: #f87171; box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.35); animation: shake 0.35s; }
+@keyframes shake { 25% { transform: translateX(-6px); } 50% { transform: translateX(6px); } 75% { transform: translateX(-3px); } }
+/* secours pour les navigateurs sans <dialog> */
+dialog.dlg-fallback { display: block; position: fixed; inset: 0; margin: auto; z-index: 90; max-height: 92vh; overflow: auto; height: fit-content; }
+body.dlg-fallback-open::after { content: ""; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); z-index: 85; }
 @media (max-width: 480px) { .old-banner-actions, .dlg-actions { grid-template-columns: 1fr; } }
+.relais-input { font-size: 1.8rem; font-weight: 900; text-align: center; min-height: 56px; }
+.relais-input::placeholder { font-size: 1.05rem; font-weight: 600; }

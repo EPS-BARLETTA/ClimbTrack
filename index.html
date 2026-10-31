@@ -91,11 +91,7 @@
         <div class="row2">
           <div>
             <h2>2 · Relais atteint</h2>
-            <div class="stepper" data-stepper="relais">
-              <button type="button" data-step="-1">−</button>
-              <output id="diff-relais">0</output>
-              <button type="button" data-step="1">+</button>
-            </div>
+            <input id="diff-relais" class="relais-input" type="number" inputmode="numeric" min="0" max="999" placeholder="N° du relais">
           </div>
           <div>
             <h2>3 · Style</h2>
@@ -329,8 +325,9 @@
     </label>
     <div class="dlg-actions">
       <button type="button" class="btn ghost" id="new-goto-fin">← Retour à Fin de séance</button>
-      <button type="button" class="btn danger" id="new-confirm" disabled>🗑 Tout effacer et commencer</button>
+      <button type="button" class="btn danger locked" id="new-confirm" >🗑 Tout effacer et commencer</button>
     </div>
+    <p class="hint" id="new-hint" aria-live="polite"></p>
   </form>
 </dialog>
 

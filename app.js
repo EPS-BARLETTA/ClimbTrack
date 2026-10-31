@@ -138,6 +138,31 @@
     return !seance.bloc.length && !seance.difficulte.length && !seance.vitesse.length;
   }
 
+  /* ---------- Fenêtres (avec secours pour les anciens iPad sans <dialog>) ---------- */
+  function openDialog(id) {
+    var d = $(id);
+    if (typeof d.showModal === "function") {
+      try { if (!d.open) d.showModal(); return; } catch (e) {}
+    }
+    d.setAttribute("open", "");
+    d.classList.add("dlg-fallback");
+    document.body.classList.add("dlg-fallback-open");
+  }
+  function closeDialog(id) {
+    var d = $(id);
+    if (typeof d.close === "function" && d.open && !d.classList.contains("dlg-fallback")) { d.close(); return; }
+    d.removeAttribute("open");
+    d.classList.remove("dlg-fallback");
+    document.body.classList.remove("dlg-fallback-open");
+  }
+  // Les boutons « Fermer » des fenêtres ne doivent jamais recharger la page
+  document.querySelectorAll("dialog form").forEach(function (f) {
+    f.addEventListener("submit", function (e) {
+      e.preventDefault();
+      closeDialog(f.closest("dialog").id);
+    });
+  });
+
   /* =========================================================
    * Écrans
    * ======================================================= */
@@ -283,7 +308,6 @@
       return '<button type="button" data-grade="' + g + '" aria-pressed="' + (diff.cotation === g) + '">' + g + "</button>";
     }).join("") + '<button type="button" data-grade="__other" aria-pressed="' + !!isCustom + '">' +
       (isCustom ? esc(diff.cotation) : "Autre…") + "</button>";
-    $("diff-relais").textContent = diff.relais;
     $("diff-degx").textContent = diff.degx;
     $("diff-nbprise").textContent = diff.nbprise;
     document.querySelectorAll("#diff-style button").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.val === diff.style); });
@@ -314,7 +338,7 @@
       var b = e.target.closest("[data-step]");
       if (!b) return;
       var key = st.dataset.stepper;
-      var max = key === "nbprise" ? 20 : 40;
+      var max = key === "nbprise" ? 20 : 60;
       diff[key] = Math.max(0, Math.min(max, (diff[key] || 0) + (+b.dataset.step)));
       renderDiffForm();
     });
@@ -334,9 +358,14 @@
   });
   $("diff-td").addEventListener("click", function () { diff.td = !diff.td; renderDiffForm(); });
 
+  $("diff-relais").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } });
   $("diff-add").addEventListener("click", function () {
     if (!diff.cotation) { $("diff-hint").textContent = "Choisis d'abord la cotation (étape 1)."; return; }
     if (!diff.res) { $("diff-hint").textContent = "Choisis le résultat (étape 4)."; return; }
+    var relaisTxt = $("diff-relais").value.trim();
+    var relais = parseInt(relaisTxt, 10);
+    if (relaisTxt && (isNaN(relais) || relais < 0 || relais > 999)) { $("diff-hint").textContent = "Numéro de relais invalide."; return; }
+    diff.relais = isNaN(relais) ? 0 : relais;
     var it = { cotation: diff.cotation, relais: diff.relais, style: diff.style, res: diff.res };
     if (diff.res === "ne") { it.degx = diff.degx; it.nbprise = diff.nbprise; it.td = diff.td; }
     seance.difficulte.push(it);
@@ -582,7 +611,12 @@
   }
 
   function updateNewConfirm() {
-    $("new-confirm").disabled = !($("new-check-qr").checked && $("new-check-carnet").checked);
+    var ok = $("new-check-qr").checked && $("new-check-carnet").checked;
+    $("new-confirm").classList.toggle("locked", !ok);
+    ["new-check-qr", "new-check-carnet"].forEach(function (id) {
+      if ($(id).checked) $(id).closest(".check").classList.remove("missing");
+    });
+    if (ok) $("new-hint").textContent = "";
   }
 
   function askNewSeance() {
@@ -601,19 +635,26 @@
     else { c.textContent = "Pas encore fait (coche quand même si tu n'utilises pas de carnet)."; c.className = "todo"; }
     $("new-check-qr").checked = false;
     $("new-check-carnet").checked = false;
+    $("new-hint").textContent = "";
+    document.querySelectorAll("#new-dialog .check").forEach(function (c) { c.classList.remove("missing"); });
     updateNewConfirm();
-    $("new-dialog").showModal();
+    openDialog("new-dialog");
   }
 
   $("new-check-qr").addEventListener("change", updateNewConfirm);
   $("new-check-carnet").addEventListener("change", updateNewConfirm);
   $("new-confirm").addEventListener("click", function () {
-    if ($("new-confirm").disabled) return;
-    $("new-dialog").close();
+    var missing = ["new-check-qr", "new-check-carnet"].filter(function (id) { return !$(id).checked; });
+    if (missing.length) {
+      missing.forEach(function (id) { $(id).closest(".check").classList.add("missing"); });
+      $("new-hint").textContent = "☝️ Coche les 2 cases ci-dessus pour pouvoir effacer.";
+      return;
+    }
+    closeDialog("new-dialog");
     startNewSeance();
   });
   $("new-goto-fin").addEventListener("click", function () {
-    $("new-dialog").close();
+    closeDialog("new-dialog");
     selectTab("fin");
   });
   $("fin-new").addEventListener("click", askNewSeance);
@@ -699,7 +740,7 @@
 
   $("fin-carnet").addEventListener("click", function () {
     $("carnet-preview").textContent = carnetText();
-    $("carnet-dialog").showModal();
+    openDialog("carnet-dialog");
   });
 
   function markCarnet() { seance.carnetAt = new Date().toISOString(); saveSeance(); }
@@ -715,14 +756,14 @@
       navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
     } else done(false);
     if (!opened) location.href = CARNET_URL;
-    $("carnet-dialog").close();
+    closeDialog("carnet-dialog");
   });
 
   $("carnet-file").addEventListener("click", function () {
     markCarnet();
     downloadFile(carnetFile());
     toast("💾 Fichier enregistré dans Téléchargements : importe-le dans ton carnet.");
-    $("carnet-dialog").close();
+    closeDialog("carnet-dialog");
   });
 
   $("carnet-share").addEventListener("click", function () {
@@ -736,11 +777,11 @@
       downloadFile(file);
       toast("Partage indisponible : fichier enregistré dans Téléchargements.");
     }
-    $("carnet-dialog").close();
+    closeDialog("carnet-dialog");
   });
 
-  $("btn-help").addEventListener("click", function () { $("help-dialog").showModal(); });
-  $("btn-safety").addEventListener("click", function () { $("safety-dialog").showModal(); });
+  $("btn-help").addEventListener("click", function () { openDialog("help-dialog"); });
+  $("btn-safety").addEventListener("click", function () { openDialog("safety-dialog"); });
 
   /* =========================================================
    * MES VOIES — stockage IndexedDB (les photos ne saturent plus la mémoire)
