@@ -41,6 +41,7 @@
       <span class="badge" id="who-classe"></span>
     </div>
     <div class="top-actions">
+      <button class="btn small btn-new" id="btn-new-top" type="button">🆕 Nouvelle séance</button>
       <button class="btn small ghost" id="btn-change-id" type="button">👤 Changer</button>
       <button class="btn small ghost" id="btn-help" type="button">❓ Aide</button>
       <button class="btn small ghost" id="btn-safety" type="button">🦺 Sécurité</button>
@@ -56,6 +57,13 @@
   </nav>
 
   <main class="panels">
+    <div id="old-banner" class="old-banner" hidden>
+      <p id="old-banner-text"></p>
+      <div class="old-banner-actions">
+        <button class="btn btn-new" id="old-banner-new" type="button">🆕 Nouvelle séance</button>
+        <button class="btn ghost" id="old-banner-keep" type="button">Continuer cette séance</button>
+      </div>
+    </div>
 
     <!-- BLOC -->
     <section class="panel" id="panel-bloc" data-panel="bloc">
@@ -203,8 +211,8 @@
         <button class="btn btn-carnet big full" id="fin-carnet" type="button">📒 Enregistrer dans mon carnet</button>
       </div>
       <div class="card">
-        <button class="btn danger full" id="fin-new" type="button">🆕 Nouvelle séance (effacer cette séance)</button>
-        <p class="muted small center">À faire seulement après le scan du prof.</p>
+        <button class="btn btn-new big full" id="fin-new" type="button">🆕 Nouvelle séance</button>
+        <p class="muted small center">À faire à la fin, après le scan du prof et l'enregistrement dans ton carnet.</p>
       </div>
     </section>
 
@@ -301,6 +309,28 @@
       <li>Utilise le chrono mural (ou celui de l'appli si non disponible).</li>
     </ul>
     <button value="cancel" class="btn btn-go full">J'ai compris</button>
+  </form>
+</dialog>
+
+<!-- ============ NOUVELLE SÉANCE ============ -->
+<dialog id="new-dialog" class="dlg">
+  <form method="dialog" class="dlg-panel">
+    <h2>🆕 Nouvelle séance</h2>
+    <p class="warn-box">⚠️ Tout ce qui est enregistré pour cette séance va être <strong>effacé</strong> : <span id="new-summary"></span>.<br>
+      <span class="muted small">Tes voies de « Mes voies » sont conservées.</span></p>
+    <p class="muted">Avant d'effacer, vérifie :</p>
+    <label class="check">
+      <input type="checkbox" id="new-check-qr">
+      <span><strong>📷 Mon prof a scanné mon QR code</strong><small id="new-status-qr"></small></span>
+    </label>
+    <label class="check">
+      <input type="checkbox" id="new-check-carnet">
+      <span><strong>📒 J'ai enregistré ma séance dans mon carnet</strong><small id="new-status-carnet"></small></span>
+    </label>
+    <div class="dlg-actions">
+      <button type="button" class="btn ghost" id="new-goto-fin">← Retour à Fin de séance</button>
+      <button type="button" class="btn danger" id="new-confirm" disabled>🗑 Tout effacer et commencer</button>
+    </div>
   </form>
 </dialog>
 

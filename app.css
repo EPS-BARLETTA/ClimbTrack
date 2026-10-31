@@ -316,3 +316,19 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1p
 .viewer-info p { margin: 4px 0 0; }
 .viewer-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
 @media (min-width: 700px) { .viewer-info { grid-template-columns: 1fr auto; align-items: center; } .viewer-actions { min-width: 420px; } }
+
+/* ---------- Nouvelle séance ---------- */
+.btn-new { background: rgba(251, 146, 60, 0.16); border-color: rgba(251, 146, 60, 0.55); color: #fed7aa; }
+.old-banner { margin-bottom: 14px; padding: 14px 16px; border-radius: var(--radius); background: rgba(251, 146, 60, 0.12); border: 1px solid rgba(251, 146, 60, 0.5); }
+.old-banner p { margin: 0 0 10px; font-weight: 700; line-height: 1.4; }
+.old-banner-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.warn-box { padding: 12px 14px; border-radius: 14px; background: rgba(248, 113, 113, 0.12); border: 1px solid rgba(248, 113, 113, 0.45); line-height: 1.45; }
+.check { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; margin-bottom: 8px; border-radius: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12); cursor: pointer; }
+.check input { width: 26px; height: 26px; min-height: 0; margin: 2px 0 0; flex: none; accent-color: #10b981; }
+.check strong { display: block; }
+.check small { display: block; margin-top: 3px; font-size: 0.85rem; color: var(--muted); }
+.check small.done { color: #6ee7b7; }
+.check small.todo { color: #fca5a5; }
+.dlg-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.btn.danger:not(:disabled) { background: #dc2626; color: #fff; border-color: transparent; }
+@media (max-width: 480px) { .old-banner-actions, .dlg-actions { grid-template-columns: 1fr; } }

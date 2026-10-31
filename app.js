@@ -160,6 +160,7 @@
     $("who-classe").textContent = identite.classe;
     var hashTab = (location.hash || "").replace("#", "");
     selectTab(PANELS[hashTab] ? hashTab : (load(KEY_TAB, "bloc") || "bloc"));
+    checkOldSeance();
   }
 
   function updateClassePreview() {
@@ -552,18 +553,89 @@
     catch (e) { holder.textContent = "QR impossible : séance trop longue."; }
     $("qr-full-name").textContent = identite.prenom + " " + identite.nom + " · " + identite.classe;
     $("qr-full").hidden = false;
+    if (!seanceIsEmpty()) { seance.qrShownAt = new Date().toISOString(); saveSeance(); }
   });
   $("qr-full-close").addEventListener("click", function () { $("qr-full").hidden = true; });
 
-  $("fin-new").addEventListener("click", function () {
-    if (seanceIsEmpty()) { toast("La séance est déjà vide."); return; }
-    if (!confirm("Effacer cette séance et en commencer une nouvelle ?\n\nVérifie d'abord que ton prof a scanné ton QR.")) return;
+  /* ---------- Nouvelle séance (avec vérification) ---------- */
+  function timeFr(iso) {
+    try { return new Date(iso).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }); } catch (e) { return ""; }
+  }
+  function dayKey(iso) { try { return new Date(iso).toDateString(); } catch (e) { return ""; } }
+  function dateFr(iso) { try { return new Date(iso).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }); } catch (e) { return ""; } }
+  function seanceSummary() {
+    var parts = [];
+    if (seance.bloc.length) parts.push(seance.bloc.length + " bloc" + (seance.bloc.length > 1 ? "s" : ""));
+    if (seance.difficulte.length) parts.push(seance.difficulte.length + " voie" + (seance.difficulte.length > 1 ? "s" : ""));
+    if (seance.vitesse.length) parts.push(seance.vitesse.length + " temps de vitesse");
+    return parts.join(", ");
+  }
+  function lastActivity() { return seance.updatedAt || seance.startedAt; }
+
+  function startNewSeance() {
     seance = newSeance();
     saveSeance();
     renderAll();
+    $("old-banner").hidden = true;
     selectTab("bloc");
-    toast("🆕 Nouvelle séance");
+    toast("🆕 Nouvelle séance : tout est prêt");
+  }
+
+  function updateNewConfirm() {
+    $("new-confirm").disabled = !($("new-check-qr").checked && $("new-check-carnet").checked);
+  }
+
+  function askNewSeance() {
+    if (seanceIsEmpty()) {
+      seance = newSeance();
+      saveSeance();
+      $("old-banner").hidden = true;
+      toast("La séance est déjà vide : tu peux commencer.");
+      return;
+    }
+    $("new-summary").textContent = seanceSummary();
+    var q = $("new-status-qr"), c = $("new-status-carnet");
+    if (seance.qrShownAt) { q.textContent = "QR affiché en grand à " + timeFr(seance.qrShownAt) + "."; q.className = "done"; }
+    else { q.textContent = "Ton QR n'a pas encore été affiché en grand pour le scan."; q.className = "todo"; }
+    if (seance.carnetAt) { c.textContent = "Carnet enregistré à " + timeFr(seance.carnetAt) + "."; c.className = "done"; }
+    else { c.textContent = "Pas encore fait (coche quand même si tu n'utilises pas de carnet)."; c.className = "todo"; }
+    $("new-check-qr").checked = false;
+    $("new-check-carnet").checked = false;
+    updateNewConfirm();
+    $("new-dialog").showModal();
+  }
+
+  $("new-check-qr").addEventListener("change", updateNewConfirm);
+  $("new-check-carnet").addEventListener("change", updateNewConfirm);
+  $("new-confirm").addEventListener("click", function () {
+    if ($("new-confirm").disabled) return;
+    $("new-dialog").close();
+    startNewSeance();
   });
+  $("new-goto-fin").addEventListener("click", function () {
+    $("new-dialog").close();
+    selectTab("fin");
+  });
+  $("fin-new").addEventListener("click", askNewSeance);
+  $("btn-new-top").addEventListener("click", askNewSeance);
+  $("old-banner-new").addEventListener("click", askNewSeance);
+  $("old-banner-keep").addEventListener("click", function () {
+    $("old-banner").hidden = true;
+    try { sessionStorage.setItem("ct2_keep_" + seance.id, "1"); } catch (e) {}
+  });
+
+  // Séance d'un autre jour encore en mémoire : on prévient l'élève
+  function checkOldSeance() {
+    var last = lastActivity();
+    var kept = false;
+    try { kept = sessionStorage.getItem("ct2_keep_" + seance.id) === "1"; } catch (e) {}
+    var isOld = !seanceIsEmpty() && last && dayKey(last) !== new Date().toDateString();
+    $("old-banner").hidden = !isOld || kept;
+    if (isOld) {
+      $("old-banner-text").textContent = "📅 Ta séance du " + dateFr(last) + " est encore en mémoire (" + seanceSummary() +
+        "). C'est une nouvelle séance aujourd'hui ?";
+    }
+  }
 
   /* =========================================================
    * CARNET DE SUIVI (même fonctionnement que Chrono Carnet)
@@ -630,7 +702,10 @@
     $("carnet-dialog").showModal();
   });
 
+  function markCarnet() { seance.carnetAt = new Date().toISOString(); saveSeance(); }
+
   $("carnet-open").addEventListener("click", function () {
+    markCarnet();
     var text = carnetText();
     var opened = window.open(CARNET_URL, "_blank");
     var done = function (ok) {
@@ -644,12 +719,14 @@
   });
 
   $("carnet-file").addEventListener("click", function () {
+    markCarnet();
     downloadFile(carnetFile());
     toast("💾 Fichier enregistré dans Téléchargements : importe-le dans ton carnet.");
     $("carnet-dialog").close();
   });
 
   $("carnet-share").addEventListener("click", function () {
+    markCarnet();
     var file = carnetFile();
     if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
       navigator.share({ files: [file], title: "Mes résultats ClimbTrack" }).catch(function (err) {
