@@ -377,12 +377,16 @@
     toast("✅ Temps " + prettyTime(t) + " ajouté");
   }
   $("vit-add").addEventListener("click", function () {
-    var s = parseInt($("vit-s").value, 10);
+    var m = parseInt($("vit-m").value || "0", 10);
+    var s = parseInt($("vit-s").value || "0", 10);
     var c = parseInt($("vit-c").value || "0", 10);
-    if (isNaN(s) || s < 0) { toast("Tape les secondes.", true); $("vit-s").focus(); return; }
+    if (isNaN(m) || m < 0 || m > 59) { toast("Minutes : entre 0 et 59.", true); return; }
+    if (isNaN(s) || s < 0) { toast("Secondes : nombre positif.", true); return; }
     if (isNaN(c) || c < 0 || c > 99) { toast("Centièmes : entre 0 et 99.", true); return; }
-    addRun(formatTime(0, s, c));
-    $("vit-s").value = ""; $("vit-c").value = "";
+    if (!$("vit-s").value && !$("vit-m").value) { toast("Tape le temps (secondes, et minutes si besoin).", true); $("vit-s").focus(); return; }
+    if (m === 0 && s === 0 && c === 0) { toast("Le temps ne peut pas être 0.", true); return; }
+    addRun(formatTime(m, s, c));
+    $("vit-m").value = ""; $("vit-s").value = ""; $("vit-c").value = "";
   });
 
   var chronoStart = 0, chronoRAF = null;
@@ -726,34 +730,67 @@
         var url = URL.createObjectURL(r.image);
         galleryUrls.push(url);
         var sub = [r.cotation, r.couleur].filter(Boolean).join(" · ");
-        return '<div class="route-card"><img src="' + url + '" alt=""><div class="info"><b>' + esc(r.name || "Sans nom") + "</b>" +
+        return '<div class="route-card"><button type="button" class="view" data-view="' + esc(r.id) + '" aria-label="Voir en grand">' +
+          '<img src="' + url + '" alt=""></button><div class="info"><b>' + esc(r.name || "Sans nom") + "</b>" +
           '<span class="muted small">' + esc(sub) + (r.author ? (sub ? " · " : "") + "par " + esc(r.author) : "") + "</span></div>" +
-          '<div class="acts"><button class="btn btn-voies" data-share="' + esc(r.id) + '">📤 Partager</button>' +
-          (r.base ? '<button class="btn" data-edit="' + esc(r.id) + '" aria-label="Modifier">✏️</button>' : "<span></span>") +
-          '<button class="btn danger" data-delroute="' + esc(r.id) + '" aria-label="Supprimer">🗑</button></div></div>';
+          '<div class="acts"><button class="btn" data-view="' + esc(r.id) + '">👁 Voir</button>' +
+          '<button class="btn btn-voies" data-share="' + esc(r.id) + '">📤 Partager</button>' +
+          (r.base ? '<button class="btn" data-edit="' + esc(r.id) + '">✏️ Modifier</button>' : '<span></span>') +
+          '<button class="btn danger" data-delroute="' + esc(r.id) + '">🗑 Supprimer</button></div></div>';
       }).join("");
     }).catch(function () {
       el.innerHTML = '<p class="empty">Impossible d\'ouvrir la galerie sur ce navigateur.</p>';
     });
   }
 
+  function shareRoute(r) {
+    var name = "Voie_" + fileSafe(r.name || "climbtrack") + ".jpg";
+    var file;
+    try { file = new File([r.image], name, { type: r.image.type || "image/jpeg" }); }
+    catch (err) { file = r.image; file.name = name; }
+    var text = (r.name || "Ma voie") + (r.cotation ? " — " + r.cotation : "") + (r.notes ? "\n" + r.notes : "");
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: r.name || "Ma voie", text: text }).catch(function () {});
+    } else {
+      downloadFile(file);
+      toast("Image enregistrée : envoie-la à tes amis.");
+    }
+  }
+
+  var viewerRoute = null, viewerUrl = null;
+  function openViewer(r) {
+    viewerRoute = r;
+    if (viewerUrl) URL.revokeObjectURL(viewerUrl);
+    viewerUrl = URL.createObjectURL(r.image);
+    $("viewer-img").src = viewerUrl;
+    $("viewer-title").textContent = r.name || "Sans nom";
+    $("viewer-sub").textContent = [r.cotation, r.couleur ? "prises " + r.couleur.toLowerCase() : "", r.author ? "par " + r.author : ""].filter(Boolean).join(" · ");
+    $("viewer-notes").textContent = r.notes || "";
+    $("viewer-edit").hidden = !r.base;
+    $("route-viewer").hidden = false;
+    document.body.style.overflow = "hidden";
+  }
+  function closeViewer() {
+    $("route-viewer").hidden = true;
+    document.body.style.overflow = "";
+    viewerRoute = null;
+  }
+  $("viewer-close").addEventListener("click", closeViewer);
+  $("viewer-share").addEventListener("click", function () { if (viewerRoute) shareRoute(viewerRoute); });
+  $("viewer-edit").addEventListener("click", function () {
+    var r = viewerRoute;
+    if (!r || !r.base) return;
+    closeViewer();
+    openEditor(r.base, r);
+  });
+
   $("route-gallery").addEventListener("click", function (e) {
-    var s = e.target.closest("[data-share]"), d = e.target.closest("[data-delroute]"), ed = e.target.closest("[data-edit]");
-    if (s) {
-      getRoute(s.dataset.share).then(function (r) {
-        if (!r) return;
-        var name = "Voie_" + fileSafe(r.name || "climbtrack") + ".jpg";
-        var file;
-        try { file = new File([r.image], name, { type: r.image.type || "image/jpeg" }); }
-        catch (err) { file = r.image; file.name = name; }
-        var text = (r.name || "Ma voie") + (r.cotation ? " — " + r.cotation : "") + (r.notes ? "\n" + r.notes : "");
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-          navigator.share({ files: [file], title: r.name || "Ma voie", text: text }).catch(function () {});
-        } else {
-          downloadFile(file);
-          toast("Image enregistrée : envoie-la à tes amis.");
-        }
-      });
+    var v = e.target.closest("[data-view]"), s = e.target.closest("[data-share]"),
+      d = e.target.closest("[data-delroute]"), ed = e.target.closest("[data-edit]");
+    if (v) {
+      getRoute(v.dataset.view).then(function (r) { if (r) openViewer(r); });
+    } else if (s) {
+      getRoute(s.dataset.share).then(function (r) { if (r) shareRoute(r); });
     } else if (d) {
       if (!confirm("Supprimer cette voie ?")) return;
       deleteRoute(d.dataset.delroute).then(renderGallery);

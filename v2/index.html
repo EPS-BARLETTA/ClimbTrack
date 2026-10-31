@@ -146,10 +146,13 @@
         <div class="card">
           <h2>Temps du chrono du mur</h2>
           <div class="time-entry">
-            <label>Secondes<input id="vit-s" type="number" inputmode="numeric" min="0" max="599" placeholder="9"></label>
+            <label>Minutes<input id="vit-m" type="number" inputmode="numeric" min="0" max="59" placeholder="0"></label>
+            <span class="time-sep">:</span>
+            <label>Secondes<input id="vit-s" type="number" inputmode="numeric" min="0" max="59" placeholder="9"></label>
             <span class="time-sep">,</span>
             <label>Centièmes<input id="vit-c" type="number" inputmode="numeric" min="0" max="99" placeholder="45"></label>
           </div>
+          <p class="muted small">Minutes : seulement si le temps dépasse 1 minute.</p>
           <button class="btn btn-vit big full" id="vit-add" type="button">➕ Ajouter ce temps</button>
         </div>
         <div class="card">
@@ -300,6 +303,23 @@
     <button value="cancel" class="btn btn-go full">J'ai compris</button>
   </form>
 </dialog>
+
+<!-- ============ VOIR UNE VOIE ============ -->
+<div id="route-viewer" class="viewer" hidden>
+  <div class="viewer-img"><img id="viewer-img" alt=""></div>
+  <div class="viewer-info">
+    <div>
+      <b id="viewer-title"></b>
+      <p id="viewer-sub" class="muted"></p>
+      <p id="viewer-notes"></p>
+    </div>
+    <div class="viewer-actions">
+      <button type="button" class="btn btn-voies" id="viewer-share">📤 Partager</button>
+      <button type="button" class="btn" id="viewer-edit">✏️ Modifier</button>
+      <button type="button" class="btn ghost" id="viewer-close">✕ Fermer</button>
+    </div>
+  </div>
+</div>
 
 <!-- ============ ÉDITEUR DE VOIE ============ -->
 <div id="route-editor" class="editor" hidden>

@@ -1,6 +1,6 @@
 /* ClimbTrack v2 — mode hors-ligne (réseau d'abord, sinon cache).
  * Augmenter VERSION à chaque mise en ligne. */
-const VERSION = "climbtrack-v2-2026-10-31a";
+const VERSION = "climbtrack-v2-2026-10-31b";
 const PREFIX = "climbtrack-v2-";
 const FILES = ["./", "index.html", "app.css", "app.js", "lib/qrcode.js"];
 
