@@ -1185,7 +1185,7 @@
     $("backup-info").textContent = a == null ? "Jamais sauvegardé sur cette tablette." : a === 0 ? "Dernière sauvegarde : aujourd'hui ✅" : "Dernière sauvegarde : il y a " + a + " jour(s).";
   }
   function renderCoverExtras() {
-    $("cover-install").hidden = isInstalled();
+    // toujours proposé (replié) : depuis « Mes outils », l'iPhone se dit « installé » alors que l'appli ne l'est pas
     $("cover-backup").hidden = true;
     getAllRoutes().then(function (routes) {
       routeCount = routes.length;
