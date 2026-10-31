@@ -1,27 +1,9 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>ClimbTrack — Identification</title><link rel="stylesheet" href="style.css"></head>
-<body><div class="main-wrap"><div class="container">
-  <div class="headerbar"><div class="logo">🧗 <span class="highlight">ClimbTrack</span></div>
-    <div class="right"><a class="btn blue" href="aide.html">❓ Aide</a><a class="btn amber" href="securite.html">🦺 Sécurité</a></div></div>
-  <div class="card"><h2>Identification élève</h2><p class="lead">Renseigne ton identité pour accéder au menu.</p>
-    <form id="id-form">
-      <label>Nom<input id="nom" required placeholder="Dupont"></label>
-      <label>Prénom<input id="prenom" required placeholder="Alice"></label>
-      <label>Classe<input id="classe" required placeholder="2nde_B"></label>
-      <div class="actions"><button class="btn green big" type="submit">Continuer</button><a class="btn" href="index.html">Retour</a></div>
-    </form>
-  </div></div>
-  <footer><div class="container"><div class="footer-inner"></div></div></footer>
-</div>
-<script type="module">
-import {saveIdentite, renderFooter, clearSeance} from './app.js';
-renderFooter(); clearSeance();
-document.getElementById('id-form').addEventListener('submit', (e)=>{
-  e.preventDefault();
-  const nom = document.getElementById('nom').value.trim();
-  const prenom = document.getElementById('prenom').value.trim();
-  const classe = document.getElementById('classe').value.trim();
-  if(!nom||!prenom||!classe) return;
-  saveIdentite({nom, prenom, classe});
-  location.href='menu.html';
-});
-</script></body></html>
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ClimbTrack</title>
+<meta http-equiv="refresh" content="0; url=index.html">
+<script>location.replace("index.html");</script>
+</head><body style="background:#0b1023;color:#eef1f7;font-family:system-ui;text-align:center;padding:40px">
+<p>ClimbTrack a été mis à jour. <a href="index.html" style="color:#34d399">Ouvrir ClimbTrack</a></p>
+</body></html>
