@@ -167,6 +167,7 @@
    * Écrans
    * ======================================================= */
   function showIdentity(canCancel) {
+    $("screen-cover").hidden = true;
     $("screen-app").hidden = true;
     $("screen-id").hidden = false;
     $("id-cancel").hidden = !canCancel;
@@ -179,6 +180,7 @@
   }
 
   function showApp() {
+    $("screen-cover").hidden = true;
     $("screen-id").hidden = true;
     $("screen-app").hidden = false;
     $("who-name").textContent = identite.prenom + " " + identite.nom;
@@ -1148,9 +1150,45 @@
     updateCounts();
   }
 
+  /* =========================================================
+   * PAGE DE GARDE : affichée à chaque ouverture de l'appli
+   * ======================================================= */
+  var firstOpen = true;
+  function known() { return !!(identite && identite.nom && identite.prenom && identite.classe); }
+  function showCover() {
+    document.querySelectorAll("dialog[open]").forEach(function (d) { try { closeDialog(d.id); } catch (e) {} });
+    $("screen-app").hidden = true;
+    $("screen-id").hidden = true;
+    $("screen-cover").hidden = false;
+    var k = known();
+    $("cover-hello").textContent = k ? "👋 Bonjour " + identite.prenom + " " + identite.nom + " !" : "👋 Bienvenue !";
+    $("cover-info").textContent = k ? "Classe " + identite.classe : "Inscris-toi pour commencer : nom, prénom, classe.";
+    $("cover-go").textContent = k ? "▶️ Continuer" : "▶️ Commencer";
+    $("cover-switch").hidden = !k;
+    window.scrollTo(0, 0);
+  }
+  $("cover-go").addEventListener("click", function () {
+    if (!known()) { showIdentity(false); return; }
+    if (firstOpen) {
+      firstOpen = false;
+      if (!PANELS[(location.hash || "").replace("#", "")]) { try { localStorage.setItem(KEY_TAB, JSON.stringify("bloc")); } catch (e) {} }
+    }
+    showApp();
+  });
+  $("cover-switch").addEventListener("click", function () { showIdentity(true); });
+  $("cover-help").addEventListener("click", function () { openDialog("help-dialog"); });
+  $("cover-safety").addEventListener("click", function () { openDialog("safety-dialog"); });
+  // Tablette restée en veille longtemps (Safari ne recharge pas la page) : retour à la page de garde
+  var hiddenAt = 0;
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "hidden") { hiddenAt = Date.now(); return; }
+    if (hiddenAt && Date.now() - hiddenAt > 20 * 60 * 1000 && $("screen-cover").hidden) { firstOpen = true; showCover(); }
+    hiddenAt = 0;
+  });
+  window.addEventListener("pageshow", function (e) { if (e.persisted && $("screen-cover").hidden) { firstOpen = true; showCover(); } });
+
   renderAll();
-  if (identite && identite.nom && identite.prenom && identite.classe) showApp();
-  else showIdentity(false);
+  showCover();
 
   if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
     // Nouvelle version installée → on recharge une fois (tout est déjà enregistré à chaque ajout)
