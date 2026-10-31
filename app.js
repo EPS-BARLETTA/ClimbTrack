@@ -371,10 +371,13 @@
     seance.difficulte.push(it);
     saveSeance();
     toast("✅ Voie " + it.cotation + " ajoutée");
-    // On garde cotation / relais / style (2e essai fréquent), on remet le résultat à zéro
+    // Formulaire vidé pour la voie suivante (on garde seulement le style)
+    diff.cotation = ""; diff.relais = 0;
     diff.res = ""; diff.degx = 0; diff.nbprise = 0; diff.td = false;
+    $("diff-relais").value = "";
     renderDiffForm();
     renderDiffList();
+    window.scrollTo({ top: 0, behavior: "smooth" });
   });
 
   function neDetails(d) {
