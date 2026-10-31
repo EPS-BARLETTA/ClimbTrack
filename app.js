@@ -1155,7 +1155,12 @@
    * ======================================================= */
   var KEY_BACKUP = "ct2_backup_at", BACKUP_DAYS = 7, routeCount = 0;
   function isInstalled() {
-    try { return window.navigator.standalone === true || window.matchMedia("(display-mode: standalone)").matches; } catch (e) { return false; }
+    // iPhone / iPad : seul navigator.standalone dit vrai (une appli ouverte depuis une autre appli de l'écran d'accueil
+    // s'affiche dans un mini-navigateur où l'installation est impossible : il faut d'abord l'ouvrir dans Safari)
+    try {
+      if (typeof window.navigator.standalone === "boolean") return window.navigator.standalone;
+      return window.matchMedia("(display-mode: standalone)").matches;
+    } catch (e) { return false; }
   }
   try {
     if (navigator.storage && navigator.storage.persist) {

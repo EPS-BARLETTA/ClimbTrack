@@ -1,6 +1,6 @@
 /* ClimbTrack v2 — mode hors-ligne (réseau d'abord, sinon cache).
  * Augmenter VERSION à chaque mise en ligne. */
-const VERSION = "climbtrack-2026-10-31l";
+const VERSION = "climbtrack-2026-10-31m";
 const PREFIX = "climbtrack-";
 const FILES = ["./", "index.html", "app.css", "app.js", "lib/qrcode.js", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png"];
 
