@@ -1151,6 +1151,120 @@
   }
 
   /* =========================================================
+   * PROTÉGER LES DONNÉES : appli installée, stockage protégé, sauvegarde
+   * ======================================================= */
+  var KEY_BACKUP = "ct2_backup_at", BACKUP_DAYS = 7, routeCount = 0;
+  function isInstalled() {
+    try { return window.navigator.standalone === true || window.matchMedia("(display-mode: standalone)").matches; } catch (e) { return false; }
+  }
+  try {
+    if (navigator.storage && navigator.storage.persist) {
+      navigator.storage.persisted().then(function (ok) { if (!ok) return navigator.storage.persist(); }).catch(function () {});
+    }
+  } catch (e) {}
+  function blobToDataUrl(b) {
+    return new Promise(function (resolve) {
+      if (!b) return resolve(null);
+      var r = new FileReader();
+      r.onload = function () { resolve(r.result); };
+      r.onerror = function () { resolve(null); };
+      r.readAsDataURL(b);
+    });
+  }
+  function backupAge() {
+    var at = load(KEY_BACKUP, null);
+    return at ? Math.floor((Date.now() - new Date(at).getTime()) / 86400000) : null;
+  }
+  function renderBackupInfo() {
+    var a = backupAge();
+    $("backup-info").textContent = a == null ? "Jamais sauvegardé sur cette tablette." : a === 0 ? "Dernière sauvegarde : aujourd'hui ✅" : "Dernière sauvegarde : il y a " + a + " jour(s).";
+  }
+  function renderCoverExtras() {
+    $("cover-install").hidden = isInstalled();
+    $("cover-backup").hidden = true;
+    getAllRoutes().then(function (routes) {
+      routeCount = routes.length;
+      var a = backupAge();
+      var need = routeCount > 0 && (a == null || a >= BACKUP_DAYS);
+      $("cover-backup").hidden = !need;
+      if (need) $("cover-backup-text").textContent = a == null ? "💾 Tu n'as jamais sauvegardé tes " + routeCount + " voie(s)." : "💾 Dernière sauvegarde il y a " + a + " jours.";
+    }).catch(function () {});
+  }
+  function backupNow() {
+    toast("Préparation de la sauvegarde…");
+    getAllRoutes().then(function (routes) {
+      return Promise.all(routes.map(function (r) {
+        return Promise.all([blobToDataUrl(r.image), blobToDataUrl(r.base)]).then(function (u) {
+          var o = {};
+          Object.keys(r).forEach(function (k) { o[k] = r[k]; });
+          o.image = u[0]; o.base = u[1];
+          return o;
+        });
+      }));
+    }).catch(function () { return []; }).then(function (routes) {
+      var who = identite ? fileSafe(identite.prenom) + "_" + fileSafe(identite.nom) : "eleve";
+      var content = JSON.stringify({ t: "CLIMBTRACK_SAVE", v: 1, at: new Date().toISOString(), identite: identite, seance: seance, routes: routes });
+      var name = "ClimbTrack_Sauvegarde_" + who + "_" + new Date().toISOString().slice(0, 10) + ".json";
+      var f;
+      try { f = new File([content], name, { type: "application/json" }); } catch (e) { f = new Blob([content], { type: "application/json" }); f.name = name; }
+      var done = function () { store(KEY_BACKUP, new Date().toISOString()); renderBackupInfo(); renderCoverExtras(); };
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [f] })) {
+        toast("Choisis « Enregistrer dans Fichiers » 📁");
+        navigator.share({ files: [f], title: "Sauvegarde ClimbTrack" }).then(function () { done(); toast("💾 Sauvegarde faite !"); }).catch(function (err) {
+          if (err && err.name !== "AbortError") { downloadFile(f); done(); toast("💾 Sauvegarde enregistrée dans Téléchargements."); }
+        });
+      } else { downloadFile(f); done(); toast("💾 Sauvegarde enregistrée dans Téléchargements (app Fichiers)."); }
+    });
+  }
+  function restoreFrom(text) {
+    var p = null;
+    try { p = JSON.parse(String(text).replace(/^﻿/, "")); } catch (e) {}
+    if (!p || p.t !== "CLIMBTRACK_SAVE") {
+      toast(p && p.html != null ? "Ce fichier est pour le carnet, pas une sauvegarde." : "Ce n'est pas une sauvegarde ClimbTrack.", true);
+      return Promise.resolve(false);
+    }
+    var routes = Array.isArray(p.routes) ? p.routes : [];
+    return getAllRoutes().catch(function () { return []; }).then(function (have) {
+      var ids = {};
+      have.forEach(function (r) { ids[r.id] = 1; });
+      var jobs = routes.filter(function (r) { return r && r.id && r.image && !ids[r.id]; }).map(function (r) {
+        var o = {};
+        Object.keys(r).forEach(function (k) { o[k] = r[k]; });
+        try { o.image = dataUrlToBlob(r.image); o.base = r.base ? dataUrlToBlob(r.base) : null; } catch (e) { return Promise.resolve(0); }
+        return putRoute(o).then(function () { return 1; }, function () { return 0; });
+      });
+      return Promise.all(jobs);
+    }).then(function (added) {
+      var n = added.reduce(function (a, b) { return a + b; }, 0), msg = [];
+      var pi = p.identite;
+      if (!identite && pi && pi.nom && pi.prenom && pi.classe) { identite = pi; store(KEY_ID, identite); msg.push("identité"); }
+      if (seanceIsEmpty() && p.seance && Array.isArray(p.seance.bloc) && new Date(p.seance.startedAt).toDateString() === new Date().toDateString()) {
+        seance = p.seance; ["bloc", "difficulte", "vitesse"].forEach(function (k) { if (!Array.isArray(seance[k])) seance[k] = []; });
+        saveSeance(); msg.push("séance du jour");
+      }
+      renderAll();
+      if (identite) showApp(); else showIdentity(false);
+      selectTab("voies");
+      toast("📂 Restauré : " + n + " voie(s)" + (msg.length ? " + " + msg.join(" + ") : "") + " ✅");
+      return true;
+    });
+  }
+  function pickBackup() { $("backup-input").value = ""; $("backup-input").click(); }
+  $("backup-input").addEventListener("change", function () {
+    var f = this.files && this.files[0];
+    if (!f) return;
+    var rd = new FileReader();
+    rd.onload = function () { restoreFrom(rd.result); };
+    rd.onerror = function () { toast("Lecture du fichier impossible.", true); };
+    rd.readAsText(f);
+  });
+  $("backup-save").addEventListener("click", backupNow);
+  $("backup-restore").addEventListener("click", pickBackup);
+  $("id-restore").addEventListener("click", pickBackup);
+  $("cover-backup-btn").addEventListener("click", backupNow);
+  renderBackupInfo();
+
+  /* =========================================================
    * PAGE DE GARDE : affichée à chaque ouverture de l'appli
    * ======================================================= */
   var firstOpen = true;
@@ -1165,6 +1279,7 @@
     $("cover-info").textContent = k ? "Classe " + identite.classe : "Inscris-toi pour commencer : nom, prénom, classe.";
     $("cover-go").textContent = k ? "▶️ Continuer" : "▶️ Commencer";
     $("cover-switch").hidden = !k;
+    renderCoverExtras();
     window.scrollTo(0, 0);
   }
   $("cover-go").addEventListener("click", function () {
@@ -1206,5 +1321,5 @@
   }
 
   // Exposé pour les tests
-  window.ClimbTrack = { normalizeClasse: normalizeClasse, buildQrObject: buildQrObject, qrText: qrText, carnetText: carnetText };
+  window.ClimbTrack = { restoreFrom: restoreFrom, normalizeClasse: normalizeClasse, buildQrObject: buildQrObject, qrText: qrText, carnetText: carnetText };
 })();

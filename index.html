@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0b1023">
   <title>ClimbTrack</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="ClimbTrack">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="stylesheet" href="app.css">
 </head>
 <body>
@@ -24,6 +30,20 @@
         <button class="btn ghost" id="cover-help" type="button">❓ Aide</button>
         <button class="btn ghost" id="cover-safety" type="button">🦺 Sécurité</button>
       </div>
+      <div id="cover-backup" class="cover-backup" hidden>
+        <p id="cover-backup-text"></p>
+        <button class="btn full" id="cover-backup-btn" type="button">💾 Sauvegarder maintenant</button>
+      </div>
+    </div>
+    <div id="cover-install" class="cover-install" hidden>
+      <p class="ci-title">📲 Installe ClimbTrack sur ton écran d'accueil</p>
+      <p class="ci-why">Sinon, Safari peut effacer tes voies si tu ne viens pas pendant quelques jours.</p>
+      <ol class="ci-steps">
+        <li><span class="ci-ico">⬆️</span><span>Touche <b>Partager</b><small>en haut de Safari (ou dans le menu ⋯)</small></span></li>
+        <li><span class="ci-ico">➕</span><span><b>Sur l'écran d'accueil</b><small>descends un peu dans la liste</small></span></li>
+        <li><span class="ci-ico">🧗</span><span>Touche <b>Ajouter</b><small>puis ouvre toujours l'appli avec cette icône</small></span></li>
+      </ol>
+      <p class="ci-note">Tu as déjà des voies ici ? Avant, fais 🎨 Mes voies → 💾 Sauvegarder. Dans l'appli installée : 📂 Restaurer.</p>
     </div>
   </div>
   <footer class="foot">ClimbTrack - Equipe EPS Lycée Vauban - LUXEMBOURG - JB</footer>
@@ -48,6 +68,7 @@
       <p id="id-classe-preview" class="classe-preview" aria-live="polite"></p>
       <button class="btn btn-go big full" type="submit">C'est parti →</button>
       <button id="id-cancel" class="btn ghost full" type="button" hidden>Annuler</button>
+      <button id="id-restore" class="btn ghost full small" type="button">📂 J'ai une sauvegarde</button>
     </form>
     <p class="muted center small">Tes résultats restent sur cette tablette jusqu'à ce que ton prof scanne ton QR.</p>
   </div>
@@ -206,6 +227,16 @@
       <div class="card">
         <h2>Mes voies enregistrées</h2>
         <div id="route-gallery" class="gallery"></div>
+      </div>
+      <div class="card">
+        <h2>💾 Ne perds pas tes voies</h2>
+        <p class="muted small">La sauvegarde est un fichier rangé dans « Fichiers » : il ne s'efface jamais tout seul.</p>
+        <div class="two-btn">
+          <button class="btn big" id="backup-save" type="button">💾 Sauvegarder</button>
+          <button class="btn big" id="backup-restore" type="button">📂 Restaurer</button>
+        </div>
+        <p class="muted small" id="backup-info"></p>
+        <input type="file" id="backup-input" accept=".json,application/json,text/plain" hidden>
       </div>
     </section>
 
