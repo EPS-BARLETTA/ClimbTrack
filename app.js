@@ -610,15 +610,6 @@
     toast("🆕 Nouvelle séance : tout est prêt");
   }
 
-  function updateNewConfirm() {
-    var ok = $("new-check-qr").checked && $("new-check-carnet").checked;
-    $("new-confirm").classList.toggle("locked", !ok);
-    ["new-check-qr", "new-check-carnet"].forEach(function (id) {
-      if ($(id).checked) $(id).closest(".check").classList.remove("missing");
-    });
-    if (ok) $("new-hint").textContent = "";
-  }
-
   function askNewSeance() {
     if (seanceIsEmpty()) {
       seance = newSeance();
@@ -627,35 +618,29 @@
       toast("La séance est déjà vide : tu peux commencer.");
       return;
     }
-    $("new-summary").textContent = seanceSummary();
+    $("new-summary").textContent = "(" + seanceSummary() + ")";
     var q = $("new-status-qr"), c = $("new-status-carnet");
-    if (seance.qrShownAt) { q.textContent = "QR affiché en grand à " + timeFr(seance.qrShownAt) + "."; q.className = "done"; }
-    else { q.textContent = "Ton QR n'a pas encore été affiché en grand pour le scan."; q.className = "todo"; }
-    if (seance.carnetAt) { c.textContent = "Carnet enregistré à " + timeFr(seance.carnetAt) + "."; c.className = "done"; }
-    else { c.textContent = "Pas encore fait (coche quand même si tu n'utilises pas de carnet)."; c.className = "todo"; }
-    $("new-check-qr").checked = false;
-    $("new-check-carnet").checked = false;
-    $("new-hint").textContent = "";
-    document.querySelectorAll("#new-dialog .check").forEach(function (c) { c.classList.remove("missing"); });
-    updateNewConfirm();
+    if (seance.qrShownAt) { q.textContent = "✅ QR affiché en grand à " + timeFr(seance.qrShownAt); q.className = "done"; }
+    else { q.textContent = "⚠️ Ton QR n'a pas encore été affiché en grand"; q.className = "todo"; }
+    if (seance.carnetAt) { c.textContent = "✅ Carnet enregistré à " + timeFr(seance.carnetAt); c.className = "done"; }
+    else { c.textContent = "⚠️ Carnet : pas encore enregistré sur cette tablette"; c.className = "todo"; }
+    $("new-step1").hidden = false;
+    $("new-step2").hidden = true;
     openDialog("new-dialog");
   }
 
-  $("new-check-qr").addEventListener("change", updateNewConfirm);
-  $("new-check-carnet").addEventListener("change", updateNewConfirm);
-  $("new-confirm").addEventListener("click", function () {
-    var missing = ["new-check-qr", "new-check-carnet"].filter(function (id) { return !$(id).checked; });
-    if (missing.length) {
-      missing.forEach(function (id) { $(id).closest(".check").classList.add("missing"); });
-      $("new-hint").textContent = "☝️ Coche les 2 cases ci-dessus pour pouvoir effacer.";
-      return;
-    }
-    closeDialog("new-dialog");
-    startNewSeance();
+  $("new-no").addEventListener("click", function () { closeDialog("new-dialog"); });
+  $("new-yes").addEventListener("click", function () {
+    $("new-step1").hidden = true;
+    $("new-step2").hidden = false;
   });
-  $("new-goto-fin").addEventListener("click", function () {
+  $("new-back").addEventListener("click", function () {
     closeDialog("new-dialog");
     selectTab("fin");
+  });
+  $("new-confirm").addEventListener("click", function () {
+    closeDialog("new-dialog");
+    startNewSeance();
   });
   $("fin-new").addEventListener("click", askNewSeance);
   $("btn-new-top").addEventListener("click", askNewSeance);
