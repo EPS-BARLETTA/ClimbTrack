@@ -1153,8 +1153,17 @@
   else showIdentity(false);
 
   if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
+    // Nouvelle version installée → on recharge une fois (tout est déjà enregistré à chaque ajout)
+    var hadController = !!navigator.serviceWorker.controller, reloaded = false;
+    navigator.serviceWorker.addEventListener("controllerchange", function () {
+      if (!hadController || reloaded) { hadController = true; return; }
+      reloaded = true;
+      location.reload();
+    });
     window.addEventListener("load", function () {
-      navigator.serviceWorker.register("sw.js", { scope: "./", updateViaCache: "none" }).catch(function () {});
+      navigator.serviceWorker.register("sw.js", { scope: "./", updateViaCache: "none" }).then(function (reg) {
+        try { reg.update(); } catch (e) {}
+      }).catch(function () {});
     });
   }
 

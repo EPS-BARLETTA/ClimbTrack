@@ -1,6 +1,6 @@
 /* ClimbTrack v2 — mode hors-ligne (réseau d'abord, sinon cache).
  * Augmenter VERSION à chaque mise en ligne. */
-const VERSION = "climbtrack-2026-10-31i";
+const VERSION = "climbtrack-2026-10-31j";
 const PREFIX = "climbtrack-";
 const FILES = ["./", "index.html", "app.css", "app.js", "lib/qrcode.js"];
 
@@ -43,7 +43,7 @@ self.addEventListener("fetch", (event) => {
   if (!url.pathname.startsWith(scope)) return;
 
   event.respondWith((async () => {
-    const network = fetch(req).then(async (res) => {
+    const network = fetch(req, { cache: "no-cache" }).then(async (res) => {
       if (res && res.ok && !res.redirected) {
         const cache = await caches.open(VERSION);
         cache.put(req, res.clone()).catch(() => {});
